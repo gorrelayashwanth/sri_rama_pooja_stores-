@@ -1,0 +1,103 @@
+Web Flow Document
+Sri Rama Pooja Store — User Interface & Admin Panel
+Version: 1.0 | Date: March 2026
+1. User-Facing Web Flow
+1.1 Homepage Flow
+Homepage (/)├── Hero Banner (Featured Sale / Seasonal Offer)├── Category Grid (Pooja Samagri, Thali Sets, Diyas, etc.)├── Bestsellers Section (horizontal scroll, product cards)├── Flash Sale / Offer Strip├── Featured Collections (Ganesh Pooja, Navratri, Diwali)├── Testimonials Section├── Store Info Section (Address, Hours, Map Embed)└── Footer (Links, Social, WhatsApp CTA)
+1.2 Authentication Flow
+Login (/login)├── Email + Password → JWT Token → Redirect to previous page or Home├── Forgot Password → Email OTP → Reset Password└── Google OAuth (optional)Register (/register)├── Name, Email, Phone, Password├── OTP Verification└── Redirect to Home (logged in)
+1.3 Product Discovery Flow
+Collections (/collections)├── Sidebar Filters│   ├── Category (multi-select checkboxes)│   ├── Price Range (slider)│   ├── Availability (In Stock only)│   └── Sort (Price Low–High, High–Low, Newest, Bestseller)├── Product Grid (3-col desktop, 2-col tablet, 1-col mobile)│   └── Product Card│       ├── Image (hover zoom)│       ├── Title, Price, Discounted Price, Discount %│       ├── "Sale" badge if applicable│       └── Add to Cart button└── Pagination / Load MoreSearch (/search?q=)├── Real-time Suggestions Dropdown└── Results Page (same grid as collections)
+1.4 Product Detail Flow
+Product Page (/products/:slug)├── Image Gallery (main + thumbnails)├── Title, SKU, Price, Discounted Price├── Stock Availability Badge├── Quantity Selector├── Add to Cart / Buy Now├── Product Description (tabs: Description | Details | Reviews)├── Shipping Info├── Related Products Section└── Reviews & Ratings
+1.5 Cart & Checkout Flow
+Cart (/cart)├── Product list (image, name, qty, price)├── Update Qty / Remove├── Coupon Code Input├── Price Summary (Subtotal, Discount, Shipping, Total)└── Proceed to Checkout CTACheckout (/checkout)├── Step 1: Delivery Address (form or saved address)├── Step 2: Payment│   ├── UPI / PhonePe / GPay│   ├── Debit/Credit Card (Razorpay)│   └── Cash on Delivery├── Step 3: Order Summary Review└── Step 4: Confirm Order → Order Confirmation pageOrder Confirmation (/order/:id)├── Success animation├── Order ID, Estimated Delivery├── WhatsApp notification (optional)└── Continue Shopping CTA
+1.6 User Account Flow
+My Account (/account)├── Profile (Name, Email, Phone, Change Password)├── My Orders│   └── Order Card → Order Detail (/orders/:id)│       ├── Items, Status, Tracking│       └── Cancel Order (if pending)├── Wishlist├── Saved Addresses└── Logout
+2. Admin Panel Web Flow
+2.1 Admin Login
+Admin Login (/admin/login)├── Email + Password├── JWT Token (admin role)└── Redirect to Admin Dashboard
+2.2 Admin Dashboard Overview
+Admin Dashboard (/admin)├── KPI Cards (Today's Orders, Revenue, Total Products, Low Stock)├── Revenue Chart (weekly / monthly line chart)├── Recent Orders Table (live)├── Low Stock Alerts└── Quick Actions (Add Product, View Orders, Create Coupon)
+2.3 Product Management Flow
+Products (/admin/products)├── Product Table (search, filter by category, sort)│   └── Row Actions: Edit | Delete | Toggle Availability├── Add New Product (/admin/products/new)│   ├── Name, Slug, Description (Rich Text)│   ├── Category (dropdown)│   ├── Price, Sale Price, Discount %│   ├── Stock Quantity│   ├── Images (drag & drop multi-upload)│   ├── Tags (comma separated)│   └── Save / Publish└── Edit Product (/admin/products/:id/edit)    └── Same form pre-filled with live update
+2.4 Category Management Flow
+Categories (/admin/categories)├── Category List (name, slug, product count)├── Add Category (name, slug, image, parent category)└── Edit / Delete Category
+2.5 Order Management Flow
+Orders (/admin/orders)├── Order Table (Order ID, Customer, Date, Status, Amount)├── Filter by Status: Pending | Processing | Shipped | Delivered | Cancelled└── Order Detail (/admin/orders/:id)    ├── Customer Info, Delivery Address    ├── Items Ordered    ├── Payment Info    └── Status Update Dropdown (change & save → triggers user notification)
+2.6 User Management Flow
+Users (/admin/users)├── User Table (Name, Email, Phone, Joined, Orders Count)├── Search User└── User Actions: View Orders | Block / Unblock
+2.7 Discount & Coupon Flow
+Coupons (/admin/coupons)├── Coupon List (Code, Type, Value, Expiry, Usage)├── Create Coupon│   ├── Code, Type (% or Fixed), Value│   ├── Min Order Value, Max Uses│   └── Expiry Date└── Delete / Deactivate Coupon
+2.8 Media Library Flow
+Media (/admin/media)├── Grid view of all uploaded images├── Upload new images (drag & drop)├── Copy URL└── Delete Image
+3. Page Route Map
+Route
+Page
+Auth Required
+/
+Homepage
+No
+/collections
+All Products
+No
+/collections/:category
+Category Products
+No
+/products/:slug
+Product Detail
+No
+/search
+Search Results
+No
+/cart
+Cart
+No
+/checkout
+Checkout
+Yes (User)
+/order/:id
+Order Confirmation
+Yes (User)
+/login
+Login
+No
+/register
+Register
+No
+/account
+My Account
+Yes (User)
+/account/orders
+My Orders
+Yes (User)
+/admin
+Admin Dashboard
+Yes (Admin)
+/admin/products
+Product Management
+Yes (Admin)
+/admin/products/new
+Add Product
+Yes (Admin)
+/admin/products/:id/edit
+Edit Product
+Yes (Admin)
+/admin/categories
+Category Management
+Yes (Admin)
+/admin/orders
+Order Management
+Yes (Admin)
+/admin/users
+User Management
+Yes (Admin)
+/admin/coupons
+Coupon Management
+Yes (Admin)
+/admin/media
+Media Library
+Yes (Admin)
+/admin/settings
+Store Settings
+Yes (Admin)

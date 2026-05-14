@@ -1,0 +1,185 @@
+Implementation Plan
+Sri Rama Pooja Store — E-Commerce Development
+Version: 1.0 | Date: March 2026Platform: Antigravity (Claude Sonnet 4.6)Duration: 9 Weeks
+1. Project Setup (Day 1–2)
+1.1 Repository Structure
+sriramapooja/├── frontend/          # React app│   ├── src/│   │   ├── components/│   │   │   ├── ui/         # shadcn components│   │   │   ├── layout/     # Navbar, Footer, Sidebar│   │   │   ├── product/    # ProductCard, Gallery, etc.│   │   │   ├── cart/│   │   │   ├── checkout/│   │   │   └── admin/      # Admin-specific components│   │   ├── pages/│   │   │   ├── user/       # Home, Collections, Product, Cart, etc.│   │   │   └── admin/      # Dashboard, Products, Orders, etc.│   │   ├── store/          # Zustand stores│   │   ├── hooks/          # Custom React hooks│   │   ├── api/            # Axios API wrappers│   │   ├── utils/          # Helpers, formatters│   │   └── types/          # TypeScript interfaces│   ├── public/│   ├── tailwind.config.js│   └── package.json│├── backend/           # Node.js Express API│   ├── src/│   │   ├── controllers/│   │   ├── routes/│   │   ├── middleware/│   │   ├── services/│   │   ├── utils/│   │   └── app.js│   ├── prisma/│   │   ├── schema.prisma│   │   └── seed.js│   └── package.json│└── README.md
+1.2 Initial Setup Commands
+# Frontendnpx create-react-app frontend --template typescriptcd frontendnpm install axios zustand react-router-dom tailwindcss @headlessui/reactnpx shadcn-ui@latest init# Backendmkdir backend && cd backendnpm init -ynpm install express prisma @prisma/client bcryptjs jsonwebtokennpm install cloudinary multer razorpay nodemailer redisnpm install zod cors helmet morgan cookie-parsernpx prisma init# Initialize Tailwindnpx tailwindcss init -p
+2. Week-by-Week Implementation Plan
+WEEK 1–2: Foundation & Design
+Week 1 Tasks:
+☐ Set up monorepo structure
+☐ Configure Tailwind with brand colors and fonts
+☐ Set up shadcn/ui
+☐ Build shared layout: Navbar, Footer, AnnouncementBar
+☐ Build Homepage skeleton: HeroBanner, CategoryGrid, ProductCarousel
+☐ Set up React Router with all user routes defined
+Week 2 Tasks:
+☐ Complete Homepage UI
+☐ Build Collections page with FilterSidebar and ProductGrid
+☐ Build ProductCard component
+☐ Build Product Detail page
+☐ Mobile responsiveness pass for all completed pages
+Deliverable: Static UI for Homepage, Collections, Product Detail — pixel-perfect, no backend needed yet
+WEEK 3–4: Backend Core
+Week 3 Tasks:
+☐ Set up Express.js server with middleware stack
+☐ Configure PostgreSQL and Prisma
+☐ Run initial migration with full schema
+☐ Seed categories and sample products
+☐ Build Auth API: register, login, refresh token, logout
+☐ Build Products API: CRUD with image upload via Cloudinary
+☐ Build Categories API: CRUD
+Week 4 Tasks:
+☐ Build Cart logic (Redis-backed)
+☐ Build Orders API: create order, my orders, order detail
+☐ Integrate Razorpay: create order, verify payment
+☐ Build Coupons API: validate, admin CRUD
+☐ Build Media API: Cloudinary upload, list, delete
+☐ Write Prisma seed with 30+ sample products
+Deliverable: Fully working REST API with Postman collection documented
+WEEK 5: Frontend-Backend Integration
+Week 5 Tasks:
+☐ Connect Auth (Login, Register, Logout) to API
+☐ Implement JWT storage and Axios interceptors
+☐ Fetch and display real products from API
+☐ Implement Cart functionality (add, remove, update qty)
+☐ Implement Search with debounced API calls
+☐ Implement Filters (category, price, availability)
+☐ Implement Checkout flow with address selection and payment
+Deliverable: Working end-to-end user journey from browse to payment
+WEEK 6: Admin Panel — UI
+Week 6 Tasks:
+☐ Build AdminLayout: fixed sidebar, header with user info
+☐ Build Dashboard page: KPI cards, RevenueChart (Recharts), recent orders table
+☐ Build Products page: DataTable with search, add/edit/delete actions
+☐ Build Product Form: rich text description, multi-image upload, all fields
+☐ Build Categories page: list with hierarchy, add/edit/delete
+☐ Build Media Library page: grid view, upload, delete
+Deliverable: Admin UI fully built with mock data
+WEEK 7: Admin Panel — Integration & Real-Time
+Week 7 Tasks:
+☐ Connect Admin Dashboard to real analytics API
+☐ Connect Products page to API (add, edit, delete, toggle availability)
+☐ Real-time stock update from admin panel
+☐ Connect Categories to API
+☐ Build Orders Management: table, filters, status update flow
+☐ Build Users Management: user list, block/unblock
+☐ Build Coupons Management: list, create, delete
+☐ Build Store Settings page
+☐ Implement admin-only route guards
+Deliverable: Fully functional Admin Panel with live backend
+WEEK 8: Quality Assurance & Polish
+Week 8 Tasks:
+☐ Full QA pass — user flows (browse, cart, checkout, account)
+☐ Full QA pass — admin flows (products, orders, categories)
+☐ Fix all mobile responsiveness issues
+☐ Performance audit (Lighthouse): target score 85+
+☐ SEO: meta tags, OG tags, sitemap.xml
+☐ Accessibility audit: WCAG AA
+☐ Security review: auth, validation, CORS, rate limiting
+☐ Error handling — user-friendly error pages (404, 500)
+☐ Loading states and skeleton loaders
+☐ Optimize Cloudinary image transforms
+Deliverable: Production-ready codebase
+WEEK 9: Deployment & Go-Live
+Week 9 Tasks:
+☐ Configure Vercel for frontend with environment variables
+☐ Deploy backend to Railway/Render
+☐ Set up Supabase PostgreSQL in production
+☐ Configure Upstash Redis
+☐ Set up custom domain and HTTPS
+☐ Configure GitHub Actions CI/CD pipeline
+☐ Final smoke test on production
+☐ Set up Sentry error tracking
+☐ Set up Google Analytics 4
+☐ Seed production database with real product data
+☐ Train client on Admin Panel usage
+☐ Handover documentation
+Deliverable: Live website at production domain
+3. Feature Implementation Priority Matrix
+Feature
+Week
+Priority
+Complexity
+Auth (Login/Register)
+3–5
+Critical
+Medium
+Product Listing + Detail
+1–2, 5
+Critical
+Low
+Cart
+5
+Critical
+Medium
+Checkout + Payment
+5
+Critical
+High
+Admin: Products CRUD
+6–7
+Critical
+High
+Admin: Orders Management
+7
+Critical
+Medium
+Admin: Dashboard Analytics
+6–7
+High
+Medium
+Search
+5
+High
+Low
+Filters
+5
+High
+Medium
+Wishlist
+5
+Medium
+Low
+Coupon System
+4–7
+Medium
+Medium
+Reviews
+8
+Low
+Medium
+WhatsApp Chat Button
+1
+High
+Low
+Store Info / Map
+1
+High
+Low
+4. Testing Strategy
+Frontend Testing
+React Testing Library for component tests
+Cypress for end-to-end user flow tests (checkout, admin login)
+Backend Testing
+Jest + Supertest for API endpoint tests
+Prisma unit tests with mock database
+Manual QA Checklist
+☐ Can user register, login, logout?
+☐ Can user browse, filter and search products?
+☐ Can user add to cart, apply coupon, checkout?
+☐ Does Razorpay payment work in test mode?
+☐ Can admin log in and add a new product with images?
+☐ Can admin change order status and see it update in real-time?
+☐ Can admin toggle product availability and see it reflect on user side?
+☐ Is admin dashboard analytics accurate?
+☐ Is mobile layout correct on iPhone and Android?
+5. Deployment Architecture Diagram
+                    ┌─────────────────┐                    │   User Browser  │                    └────────┬────────┘                             │                    ┌────────▼────────┐                    │     Vercel      │                    │ (React Frontend)│                    └────────┬────────┘                             │ HTTPS API calls                    ┌────────▼────────┐                    │    Railway      │                    │ (Node.js API)   │                    └────┬───────┬────┘                         │       │              ┌──────────▼──┐ ┌──▼──────────┐              │  Supabase   │ │   Upstash   │              │ PostgreSQL  │ │    Redis    │              └─────────────┘ └─────────────┘                         │              ┌──────────▼──────────┐              │     Cloudinary      │              │  (Image Storage)    │              └─────────────────────┘
+6. Store Information to Hardcode
+// src/config/store.jsexport const STORE_CONFIG = {  name: "Sri Rama Pooja Store",  tagline: "Pure Devotion, Delivered to Your Door",  address: "Door No. 23, 11-116, Nageswara Rao Pantulu Rd, Rajan Killi Shop Center, Satyaranayana Puram, Vijayawada, Andhra Pradesh 520011",  phone: "092992 07650",  whatsappNumber: "919299207650",  hours: "Open daily until 11:00 PM",  email: "sriramapoojastore@gmail.com",  googleMapsUrl: "https://www.google.com/maps/dir//Sri+Rama+Pooja+Store...",  social: {    instagram: "",    facebook: "",    youtube: ""  }};
+7. Launch Checklist
+Pre-Launch: - [ ] All critical flows tested - [ ] Payment gateway in production mode (not test mode) - [ ] SSL certificate active - [ ] Custom domain pointing correctly - [ ] Backup strategy configured - [ ] 20+ products in database with real images - [ ] Store settings (name, address, phone) correctly configured - [ ] Admin account created with secure password
+Post-Launch: - [ ] Google Search Console setup - [ ] Submit sitemap.xml - [ ] Test Google Analytics tracking - [ ] Monitor Sentry for errors first 48 hours - [ ] WhatsApp button tested (click-to-chat working)

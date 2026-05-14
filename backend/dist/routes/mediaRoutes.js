@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const mediaController_1 = require("../controllers/mediaController");
+const uploadMiddleware_1 = require("../middleware/uploadMiddleware");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+const router = (0, express_1.Router)();
+router.post('/upload', authMiddleware_1.authenticate, authMiddleware_1.authorizeAdmin, uploadMiddleware_1.upload.single('image'), mediaController_1.uploadImage);
+router.post('/upload-multiple', authMiddleware_1.authenticate, authMiddleware_1.authorizeAdmin, uploadMiddleware_1.upload.array('images', 10), mediaController_1.uploadImages);
+exports.default = router;

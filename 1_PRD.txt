@@ -1,0 +1,164 @@
+Product Requirements Document (PRD)
+Sri Rama Pooja Store — E-Commerce Website & Admin Panel
+Version: 1.0Date: March 2026Client: Sri Rama Pooja Store, VijayawadaPrepared For: Development Team
+1. Executive Summary
+Sri Rama Pooja Store is a well-established physical puja items retailer located in Vijayawada, Andhra Pradesh. The client wants to expand their business online by launching a full-featured e-commerce platform modeled after the ServDharm online store, with their own branding, products, and an Admin Dashboard for complete real-time backend control.
+2. Business Details
+Field
+Details
+Store Name
+Sri Rama Pooja Store
+Address
+Door No. 23, 11-116, Nageswara Rao Pantulu Rd, Rajan Killi Shop Center, Satyaranayana Puram, Vijayawada, Andhra Pradesh 520011
+Phone
+092992 07650
+Hours
+Open · Closes 11 PM
+Google Maps
+https://maps.app.goo.gl/SriRamaPoojaStore
+3. Project Goals
+Launch a fully functional e-commerce website for Sri Rama Pooja Store
+Mirror the UI/UX structure and product categories of ServDharm
+Brand the store with Sri Rama Pooja Store identity (name, address, phone)
+Provide a real-time Admin Dashboard with full product, order and user control
+Support online ordering, cart management, and checkout
+Ensure mobile responsiveness and high performance
+4. Target Users
+User Side: - Devotees and households across India looking for puja items online - Customers from Vijayawada and Andhra Pradesh already familiar with the store - Gift buyers looking for curated puja kits and sets
+Admin Side: - Store owner / manager - Inventory team - Order fulfillment staff
+5. Feature Requirements
+5.1 User-Facing Features
+Feature
+Description
+Priority
+Homepage
+Hero banner, featured categories, bestsellers, offers
+High
+Product Listing
+Grid view, filters by category, price, availability
+High
+Product Detail
+Images, description, price, discount, add to cart
+High
+Search
+Real-time search with suggestions
+High
+Cart
+Add, remove, update quantity, price summary
+High
+Checkout
+Address, payment options, order confirmation
+High
+User Authentication
+Register, Login, Forgot Password
+High
+Order History
+View past orders and statuses
+Medium
+Wishlist
+Save products for later
+Medium
+Product Reviews
+Rate and review purchased items
+Medium
+Offers/Discounts
+Coupon codes, sale badges, percentage off
+High
+WhatsApp Contact
+Click-to-chat button linked to store phone
+High
+Store Info
+Address, hours, Google Maps embed
+Medium
+5.2 Admin Dashboard Features
+Feature
+Description
+Priority
+Dashboard Overview
+Sales stats, orders today, revenue, live inventory
+High
+Product Management
+Add, edit, delete products with images, price, stock
+High
+Category Management
+Create/edit/delete categories
+High
+Order Management
+View all orders, update status (pending/shipped/delivered)
+High
+User Management
+View registered users, block/unblock
+Medium
+Inventory Control
+Real-time stock levels, low-stock alerts
+High
+Discount/Coupon
+Create coupon codes, set expiry, usage limits
+Medium
+Analytics
+Revenue chart, top products, conversion metrics
+Medium
+Media Library
+Upload/manage product images
+High
+Settings
+Store name, contact info, shipping config
+Medium
+6. Product Categories (Based on ServDharm Reference)
+Pooja Samagri Kits
+Brass & Copper Diyas
+Incense & Dhoop
+Pooja Thali Sets
+Idols & Murtis
+Yantra & Malas
+Pooja Chowki
+Chunri & Vastra
+Gift Sets
+Seasonal / Festival Collections (Navratri, Diwali, Shivratri, etc.)
+7. Non-Functional Requirements
+Requirement
+Specification
+Performance
+Page load < 3 seconds on 4G
+Mobile Responsiveness
+Full support for mobile, tablet, desktop
+Security
+HTTPS, JWT Auth, input validation, rate limiting
+SEO
+Meta tags, OG tags, sitemap, canonical URLs
+Scalability
+Supports 10,000+ products, 1,000+ concurrent users
+Availability
+99.9% uptime target
+8. Out of Scope (v1.0)
+Native mobile app (iOS/Android)
+Multi-vendor marketplace
+AI recommendation engine
+Live chat support system
+9. Success Metrics
+500+ products listed in first 3 months
+100+ orders per month by month 2
+Average page load time < 2.5s
+Admin able to update products in real-time without developer help
+10. Timeline
+Phase
+Duration
+Deliverable
+Discovery & Design
+Week 1–2
+Wireframes, UI mockups
+Frontend Development
+Week 3–5
+User-facing pages
+Backend & API
+Week 3–6
+APIs, DB schema, auth
+Admin Panel
+Week 5–7
+Admin dashboard
+Integration & Testing
+Week 7–8
+Full QA pass
+Launch
+Week 9
+Go-live

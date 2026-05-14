@@ -1,0 +1,233 @@
+Backend Schema Document
+Sri Rama Pooja Store — Database & API Schema
+Version: 1.0 | Date: March 2026ORM: Prisma | Database: PostgreSQL
+1. Prisma Schema (Complete)
+// schema.prismagenerator client {  provider = "prisma-client-js"}datasource db {  provider = "postgresql"  url      = env("DATABASE_URL")}// ─────────────────────────────────────────────// ENUMS// ─────────────────────────────────────────────enum Role {  USER  ADMIN}enum OrderStatus {  PENDING  CONFIRMED  PROCESSING  SHIPPED  DELIVERED  CANCELLED  REFUNDED}enum PaymentStatus {  PENDING  PAID  FAILED  REFUNDED}enum PaymentMethod {  RAZORPAY  UPI  COD  CARD  WALLET}enum DiscountType {  PERCENTAGE  FIXED}// ─────────────────────────────────────────────// USER// ─────────────────────────────────────────────model User {  id            String    @id @default(cuid())  name          String  email         String    @unique  phone         String?   @unique  passwordHash  String?  role          Role      @default(USER)  isBlocked     Boolean   @default(false)  emailVerified Boolean   @default(false)  createdAt     DateTime  @default(now())  updatedAt     DateTime  @updatedAt  addresses     Address[]  orders        Order[]  wishlist      WishlistItem[]  reviews       Review[]  sessions      Session[]  @@map("users")}model Session {  id           String   @id @default(cuid())  userId       String  refreshToken String   @unique  expiresAt    DateTime  createdAt    DateTime @default(now())  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)  @@map("sessions")}model Address {  id         String  @id @default(cuid())  userId     String  fullName   String  phone      String  line1      String  line2      String?  city       String  state      String  pincode    String  isDefault  Boolean @default(false)  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)  orders     Order[]  @@map("addresses")}// ─────────────────────────────────────────────// CATEGORY// ─────────────────────────────────────────────model Category {  id          String     @id @default(cuid())  name        String     @unique  slug        String     @unique  description String?  imageUrl    String?  parentId    String?  isActive    Boolean    @default(true)  sortOrder   Int        @default(0)  createdAt   DateTime   @default(now())  updatedAt   DateTime   @updatedAt  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])  children    Category[] @relation("CategoryTree")  products    Product[]  @@map("categories")}// ─────────────────────────────────────────────// PRODUCT// ─────────────────────────────────────────────model Product {  id              String    @id @default(cuid())  name            String  slug            String    @unique  description     String?  shortDesc       String?  categoryId      String  sku             String?   @unique  price           Decimal   @db.Decimal(10, 2)  salePrice       Decimal?  @db.Decimal(10, 2)  discountPercent Int?  stock           Int       @default(0)  lowStockThreshold Int     @default(5)  isAvailable     Boolean   @default(true)  isFeatured      Boolean   @default(false)  isBestseller    Boolean   @default(false)  tags            String[]  weight          Float?    // in grams  dimensions      Json?     // { l, w, h in cm }  createdAt       DateTime  @default(now())  updatedAt       DateTime  @updatedAt  category        Category  @relation(fields: [categoryId], references: [id])  images          ProductImage[]  orderItems      OrderItem[]  wishlistItems   WishlistItem[]  reviews         Review[]  @@map("products")}model ProductImage {  id         String   @id @default(cuid())  productId  String  url        String  publicId   String   // Cloudinary public ID  altText    String?  isPrimary  Boolean  @default(false)  sortOrder  Int      @default(0)  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)  @@map("product_images")}// ─────────────────────────────────────────────// WISHLIST// ─────────────────────────────────────────────model WishlistItem {  id        String   @id @default(cuid())  userId    String  productId String  createdAt DateTime @default(now())  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)  @@unique([userId, productId])  @@map("wishlist_items")}// ─────────────────────────────────────────────// ORDER// ─────────────────────────────────────────────model Order {  id              String        @id @default(cuid())  orderNumber     String        @unique @default(cuid())  userId          String  addressId       String  status          OrderStatus   @default(PENDING)  paymentStatus   PaymentStatus @default(PENDING)  paymentMethod   PaymentMethod  razorpayOrderId String?  razorpayPaymentId String?  subtotal        Decimal       @db.Decimal(10, 2)  discount        Decimal       @db.Decimal(10, 2) @default(0)  shippingCharge  Decimal       @db.Decimal(10, 2) @default(0)  total           Decimal       @db.Decimal(10, 2)  couponCode      String?  notes           String?  createdAt       DateTime      @default(now())  updatedAt       DateTime      @updatedAt  user            User          @relation(fields: [userId], references: [id])  address         Address       @relation(fields: [addressId], references: [id])  items           OrderItem[]  coupon          Coupon?       @relation(fields: [couponCode], references: [code])  statusHistory   OrderStatusHistory[]  @@map("orders")}model OrderItem {  id          String   @id @default(cuid())  orderId     String  productId   String  productName String   // Snapshot at time of order  imageUrl    String?  // Snapshot  quantity    Int  unitPrice   Decimal  @db.Decimal(10, 2)  totalPrice  Decimal  @db.Decimal(10, 2)  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)  product     Product  @relation(fields: [productId], references: [id])  @@map("order_items")}model OrderStatusHistory {  id        String      @id @default(cuid())  orderId   String  status    OrderStatus  note      String?  changedAt DateTime    @default(now())  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)  @@map("order_status_history")}// ─────────────────────────────────────────────// COUPON// ─────────────────────────────────────────────model Coupon {  id              String       @id @default(cuid())  code            String       @unique  description     String?  discountType    DiscountType  discountValue   Decimal      @db.Decimal(10, 2)  minOrderValue   Decimal?     @db.Decimal(10, 2)  maxUses         Int?  usedCount       Int          @default(0)  isActive        Boolean      @default(true)  expiresAt       DateTime?  createdAt       DateTime     @default(now())  orders          Order[]  @@map("coupons")}// ─────────────────────────────────────────────// REVIEW// ─────────────────────────────────────────────model Review {  id        String   @id @default(cuid())  userId    String  productId String  rating    Int      // 1–5  title     String?  body      String?  isApproved Boolean @default(false)  createdAt DateTime @default(now())  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)  @@unique([userId, productId])  @@map("reviews")}// ─────────────────────────────────────────────// MEDIA// ─────────────────────────────────────────────model MediaAsset {  id         String   @id @default(cuid())  url        String  publicId   String   // Cloudinary ID  filename   String  mimeType   String  size       Int      // bytes  width      Int?  height     Int?  uploadedAt DateTime @default(now())  @@map("media_assets")}// ─────────────────────────────────────────────// STORE SETTINGS// ─────────────────────────────────────────────model StoreSetting {  id        String   @id @default(cuid())  key       String   @unique  value     String  updatedAt DateTime @updatedAt  @@map("store_settings")}
+2. API Endpoints
+2.1 Authentication
+Method
+Endpoint
+Description
+Auth
+POST
+/api/v1/auth/register
+Register user
+No
+POST
+/api/v1/auth/login
+Login user
+No
+POST
+/api/v1/auth/refresh
+Refresh JWT
+No
+POST
+/api/v1/auth/logout
+Logout (revoke token)
+Yes
+POST
+/api/v1/auth/forgot-password
+Request OTP
+No
+POST
+/api/v1/auth/reset-password
+Reset password
+No
+2.2 Products
+Method
+Endpoint
+Description
+Auth
+GET
+/api/v1/products
+Get all products (paginated, filtered)
+No
+GET
+/api/v1/products/:slug
+Get product by slug
+No
+GET
+/api/v1/products/search?q=
+Search products
+No
+POST
+/api/v1/products
+Create product
+Admin
+PUT
+/api/v1/products/:id
+Update product
+Admin
+DELETE
+/api/v1/products/:id
+Delete product
+Admin
+PATCH
+/api/v1/products/:id/availability
+Toggle availability
+Admin
+2.3 Categories
+Method
+Endpoint
+Description
+Auth
+GET
+/api/v1/categories
+Get all categories
+No
+GET
+/api/v1/categories/:slug
+Get category by slug
+No
+POST
+/api/v1/categories
+Create category
+Admin
+PUT
+/api/v1/categories/:id
+Update category
+Admin
+DELETE
+/api/v1/categories/:id
+Delete category
+Admin
+2.4 Orders
+Method
+Endpoint
+Description
+Auth
+POST
+/api/v1/orders
+Create order
+User
+GET
+/api/v1/orders/my
+Get my orders
+User
+GET
+/api/v1/orders/:id
+Get order detail
+User/Admin
+GET
+/api/v1/orders
+Get all orders
+Admin
+PATCH
+/api/v1/orders/:id/status
+Update order status
+Admin
+POST
+/api/v1/orders/verify-payment
+Verify Razorpay payment
+User
+2.5 Cart (Redis-backed)
+Method
+Endpoint
+Description
+Auth
+GET
+/api/v1/cart
+Get cart
+Optional
+POST
+/api/v1/cart/add
+Add item
+Optional
+PUT
+/api/v1/cart/update
+Update quantity
+Optional
+DELETE
+/api/v1/cart/remove/:productId
+Remove item
+Optional
+DELETE
+/api/v1/cart/clear
+Clear cart
+Optional
+2.6 Users (Admin)
+Method
+Endpoint
+Description
+Auth
+GET
+/api/v1/users
+Get all users
+Admin
+GET
+/api/v1/users/:id
+Get user detail
+Admin
+PATCH
+/api/v1/users/:id/block
+Block/unblock user
+Admin
+2.7 Coupons
+Method
+Endpoint
+Description
+Auth
+POST
+/api/v1/coupons/validate
+Validate coupon code
+User
+GET
+/api/v1/coupons
+Get all coupons
+Admin
+POST
+/api/v1/coupons
+Create coupon
+Admin
+PUT
+/api/v1/coupons/:id
+Update coupon
+Admin
+DELETE
+/api/v1/coupons/:id
+Delete coupon
+Admin
+2.8 Media
+Method
+Endpoint
+Description
+Auth
+POST
+/api/v1/media/upload
+Upload image to Cloudinary
+Admin
+GET
+/api/v1/media
+List media assets
+Admin
+DELETE
+/api/v1/media/:id
+Delete media
+Admin
+2.9 Admin Analytics
+Method
+Endpoint
+Description
+Auth
+GET
+/api/v1/admin/stats
+Dashboard KPIs
+Admin
+GET
+/api/v1/admin/revenue
+Revenue chart data
+Admin
+GET
+/api/v1/admin/top-products
+Top selling products
+Admin
+3. Seed Data — Product Categories
+const categories = [  { name: "Pooja Samagri", slug: "pooja-samagri" },  { name: "Brass & Copper Diyas", slug: "diyas" },  { name: "Incense & Dhoop", slug: "incense-dhoop" },  { name: "Pooja Thali Sets", slug: "pooja-thali-sets" },  { name: "Idols & Murtis", slug: "idols-murtis" },  { name: "Yantra & Malas", slug: "yantra-malas" },  { name: "Pooja Chowki", slug: "pooja-chowki" },  { name: "Chunri & Vastra", slug: "chunri-vastra" },  { name: "Gift Sets", slug: "gift-sets" },  { name: "Festival Collections", slug: "festival-collections" }];
+4. Middleware Stack
+// Express middleware orderapp.use(helmet())              // Security headersapp.use(cors(corsOptions))     // CORSapp.use(express.json())        // JSON body parserapp.use(cookieParser())        // Cookie parserapp.use(rateLimiter)           // Rate limitingapp.use(morgan('combined'))    // Request loggingapp.use('/api/v1', router)     // API routesapp.use(errorHandler)          // Global error handler
+5. Error Response Format
+{  "success": false,  "message": "Product not found",  "code": "PRODUCT_NOT_FOUND",  "statusCode": 404}
+6. Success Response Format
+{  "success": true,  "message": "Product created successfully",  "data": {    "id": "cljxyz123",    "name": "Brass Diya Set"  }}
+7. Pagination Format
+{  "success": true,  "data": [...],  "pagination": {    "page": 1,    "limit": 20,    "total": 150,    "totalPages": 8  }}

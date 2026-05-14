@@ -1,0 +1,203 @@
+Frontend & Design Guidelines
+Sri Rama Pooja Store — E-Commerce UI
+Version: 1.0 | Date: March 2026
+1. Brand Identity
+Element
+Value
+Store Name
+Sri Rama Pooja Store
+Tagline
+“Pure Devotion, Delivered to Your Door”
+Primary Color
+Saffron Orange — #FF6B00
+Secondary Color
+Deep Maroon — #8B0000
+Accent Color
+Golden Yellow — #FFD700
+Background
+Off-White — #FFFDF5
+Text Primary
+Dark Brown — #2D1B00
+Text Secondary
+Medium Brown — #6B4E2A
+Success
+Green — #22C55E
+Error
+Red — #EF4444
+2. Typography
+Use
+Font
+Weight
+Size
+Logo / Brand
+Playfair Display
+700 (Bold)
+28–36px
+Page Headings (H1)
+Playfair Display
+600
+32–40px
+Section Headings (H2)
+Inter
+600
+22–28px
+Sub-headings (H3)
+Inter
+500
+18–22px
+Body Text
+Inter
+400
+14–16px
+Product Title
+Inter
+600
+15–16px
+Price
+Inter
+700
+16–20px
+Buttons
+Inter
+600
+14px
+Caption / Label
+Inter
+400
+12px
+Google Fonts Import:
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+3. Color Tokens (Tailwind Config)
+// tailwind.config.jsmodule.exports = {  theme: {    extend: {      colors: {        saffron: {          DEFAULT: '#FF6B00',          50:  '#FFF3E8',          100: '#FFE2C2',          200: '#FFC080',          300: '#FF9F40',          400: '#FF7F00',          500: '#FF6B00',   // Primary          600: '#CC5500',          700: '#993F00',        },        maroon: {          DEFAULT: '#8B0000',          500: '#8B0000',          700: '#5C0000',        },        gold: {          DEFAULT: '#FFD700',          500: '#FFD700',        },        puja: {          bg: '#FFFDF5',          text: '#2D1B00',          muted: '#6B4E2A',        }      }    }  }}
+4. Component Design Specifications
+4.1 Navbar
+Height: 64px (desktop) / 56px (mobile)
+Background: White with bottom shadow
+Left: Store Logo + Name (Playfair Display, saffron)
+Center: Navigation links (Home, Shop, Collections, About, Contact)
+Right: Search icon, Wishlist icon, Cart icon (with badge), User avatar / Login
+Sticky on scroll
+Mobile: Hamburger menu with slide-in drawer
+// Example Navbar structure<nav className="sticky top-0 z-50 bg-white shadow-sm h-16 flex items-center justify-between px-6">  <Logo />  <NavLinks className="hidden md:flex" />  <NavActions /> {/* Search, Wishlist, Cart, User */}  <HamburgerMenu className="md:hidden" /></nav>
+4.2 Product Card
+Width: 100% of grid column
+Aspect Ratio: Image 1:1 square
+Corner radius: 12px
+Shadow: shadow-md hover:shadow-xl transition
+Hover: Slight translateY(-4px) scale
+Sale Badge: Top-left, saffron background, white text, “X% Off”
+Price: Strikethrough original, bold saffron for sale price
+“Add to Cart” button: Full width, saffron fill, appears on hover (desktop) / always visible (mobile)
+<div className="rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all hover:-translate-y-1 cursor-pointer bg-white">  <div className="relative">    <img src={product.image} className="w-full aspect-square object-cover" />    {product.discount && (      <span className="absolute top-2 left-2 bg-saffron-500 text-white text-xs font-bold px-2 py-1 rounded-full">        {product.discount}% Off      </span>    )}  </div>  <div className="p-3">    <h3 className="font-semibold text-puja-text text-sm line-clamp-2">{product.name}</h3>    <div className="flex items-center gap-2 mt-1">      <span className="text-saffron-500 font-bold">₹{product.salePrice}</span>      <span className="text-puja-muted line-through text-sm">₹{product.originalPrice}</span>    </div>    <button className="mt-2 w-full bg-saffron-500 hover:bg-saffron-600 text-white py-1.5 rounded-lg text-sm font-semibold transition">      Add to Cart    </button>  </div></div>
+4.3 Hero Banner
+Full width, height: 500px (desktop) / 300px (mobile)
+Background: Gradient overlay on puja-themed image
+Headline: Playfair Display, white, large
+CTA Button: Saffron outline style or filled
+Auto-sliding carousel with dot indicators
+4.4 Category Tile
+Square cards in a responsive grid (6 on desktop, 3 on tablet, 2 on mobile)
+Image with rounded corners
+Category name centered below
+Hover: slight zoom of image
+4.5 Buttons
+/* Primary */bg-saffron-500 text-white hover:bg-saffron-600 rounded-lg px-6 py-2.5 font-semibold/* Secondary (Outline) */border-2 border-saffron-500 text-saffron-500 hover:bg-saffron-50 rounded-lg px-6 py-2.5/* Danger */bg-red-500 text-white hover:bg-red-600 rounded-lg px-6 py-2.5/* Ghost */text-saffron-500 hover:bg-saffron-50 rounded-lg px-4 py-2
+4.6 Form Fields
+<div className="flex flex-col gap-1.5">  <label className="text-sm font-medium text-puja-text">{label}</label>  <input     className="border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-saffron-500 focus:ring-2 focus:ring-saffron-100"  /></div>
+5. Layout Grid
+Desktop (1280px+): 12-column grid, max-width 1280px, centered, 24px gapTablet (768px–1279px): 8-column grid, 16px gapMobile (< 768px): 4-column grid, 16px gap
+Product Grid:
+Viewport
+Columns
+Mobile (<640px)
+2 columns
+Tablet (640–1024px)
+3 columns
+Desktop (1024px+)
+4 columns
+6. Header Announcement Bar
+Above navbar, thin (36px)
+Background: Saffron gradient
+Text: “Free Shipping on Orders above ₹499 | Call: 092992 07650”
+Dismissible with X button
+7. Footer Design
+Structure:
+Row 1: Logo | About the Store | Quick Links | Contact UsRow 2: Payment Badges | Social Links | Copyright
+Background: Dark maroon (#5C0000) or very dark brown
+Text: White / Off-white
+Links: Golden hover (#FFD700)
+WhatsApp CTA button floating (bottom right): Green circle icon
+8. Admin Panel Design
+Admin Color Scheme (Separate from User Theme)
+Element
+Color
+Sidebar Background
+#1E293B (Slate 800)
+Sidebar Active
+Saffron #FF6B00
+Content Background
+#F8FAFC
+Card Background
+White
+Heading Text
+#0F172A
+Muted Text
+#64748B
+Success Badge
+#22C55E
+Warning Badge
+#F59E0B
+Danger Badge
+#EF4444
+Admin Sidebar
+Fixed left sidebar, 240px wide on desktop
+Collapsed to icons-only (64px) on mobile
+Sections: Dashboard, Products, Categories, Orders, Users, Coupons, Media, Settings
+Active item: Saffron left border + saffron text
+Admin KPI Cards
+[Total Revenue]  [Orders Today]  [Active Products]  [Low Stock]Blue gradient    Green gradient   Purple gradient    Red gradientwith arrow up/down compared to yesterday
+9. Responsive Breakpoints
+// Tailwind default breakpoints usedsm:  640px   // Small mobile landscapemd:  768px   // Tablet portraitlg:  1024px  // Tablet landscape / small desktopxl:  1280px  // Desktop2xl: 1536px  // Large desktop
+10. Accessibility Requirements
+All images must have alt text
+Buttons and links must have visible focus states
+Color contrast ratio: minimum 4.5:1 (WCAG AA)
+Forms must have label associations
+Interactive elements minimum 44x44px touch target
+Skip-to-content link at top of page
+11. Animations & Transitions
+Element
+Animation
+Product card hover
+transition-all duration-200 hover:-translate-y-1
+Button hover
+transition-colors duration-150
+Hero carousel
+transition-opacity duration-500
+Cart drawer
+Slide in from right, 300ms ease-out
+Toast notification
+Slide in from top, auto-dismiss 3s
+Page transition
+Fade-in, 200ms
+Admin sidebar toggle
+Slide, 250ms ease-in-out
+12. Page-by-Page Component List
+Page
+Key Components
+Homepage
+Navbar, AnnouncementBar, HeroBanner, CategoryGrid, ProductCarousel, OfferStrip, Testimonials, StoreInfo, Footer
+Collections
+Navbar, FilterSidebar, ProductGrid, Pagination, Footer
+Product Detail
+Navbar, ImageGallery, ProductInfo, QuantitySelector, AddToCart, Tabs, RelatedProducts, ReviewSection, Footer
+Cart
+Navbar, CartItem, CouponInput, PriceSummary, CheckoutButton, Footer
+Checkout
+Navbar, AddressForm, PaymentOptions, OrderSummary, Footer
+Admin Dashboard
+AdminSidebar, KPICards, RevenueChart, RecentOrdersTable, LowStockAlerts
+Admin Products
+AdminSidebar, DataTable, ProductForm, ImageUpload
+Admin Orders
+AdminSidebar, OrderTable, StatusUpdater

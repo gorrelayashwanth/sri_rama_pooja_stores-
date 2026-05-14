@@ -1,0 +1,228 @@
+Tech Stack Document
+Sri Rama Pooja Store — E-Commerce Platform
+Version: 1.0 | Date: March 2026AI Model: Claude Sonnet 4.6 (via Antigravity)
+1. Overview
+This document defines the complete technology stack for the Sri Rama Pooja Store e-commerce platform. The stack is selected to support rapid development in Antigravity (Claude Sonnet 4.6), real-time admin control, and scalable production deployment.
+2. Frontend Stack
+Layer
+Technology
+Version
+Reason
+Framework
+React.js
+18.x
+Component-driven, ecosystem-rich
+Routing
+React Router DOM
+v6
+SPA routing, protected routes
+State Management
+Zustand
+4.x
+Lightweight, real-time store
+Styling
+Tailwind CSS
+3.x
+Utility-first, rapid UI
+UI Components
+shadcn/ui
+Latest
+Pre-built accessible components
+Icons
+Lucide React
+Latest
+Lightweight icon set
+HTTP Client
+Axios
+1.x
+API calls with interceptors
+Form Handling
+React Hook Form
+7.x
+Validation, performance
+Rich Text Editor
+React Quill
+2.x
+Product description editor (Admin)
+Image Handling
+React Dropzone
+Latest
+Multi-image upload (Admin)
+Notifications
+React Hot Toast
+Latest
+User feedback toasts
+Charts (Admin)
+Recharts
+2.x
+Revenue and analytics charts
+Date Handling
+Day.js
+Latest
+Lightweight date formatting
+Payment
+Razorpay React SDK
+Latest
+UPI, card, wallet payments
+3. Backend Stack
+Layer
+Technology
+Version
+Reason
+Runtime
+Node.js
+20.x LTS
+JavaScript full-stack
+Framework
+Express.js
+4.x
+Minimal, fast REST APIs
+Authentication
+JWT + bcrypt
+—
+Secure token-based auth
+ORM
+Prisma
+5.x
+Type-safe DB access, migrations
+Database
+PostgreSQL
+16.x
+Relational, ACID-compliant
+File Storage
+Cloudinary
+—
+Product image hosting & CDN
+Email
+Nodemailer + Gmail SMTP
+—
+Order confirmations, OTPs
+Payment Gateway
+Razorpay
+—
+Indian payment ecosystem
+WhatsApp API
+Twilio / WATI
+—
+Order notifications
+Caching
+Redis
+7.x
+Cart sessions, rate limiting
+Validation
+Zod
+3.x
+Schema-first validation
+API Docs
+Swagger / OpenAPI
+3.x
+Auto-documented API
+4. Database
+Primary: PostgreSQL 16 (via Supabase or Railway)
+Cache: Redis (via Upstash for serverless)
+5. DevOps & Hosting
+Service
+Provider
+Purpose
+Frontend Hosting
+Vercel
+Auto-deploy from GitHub
+Backend Hosting
+Railway / Render
+Node.js server hosting
+Database
+Supabase (PostgreSQL)
+Managed DB with free tier
+Redis Cache
+Upstash
+Serverless Redis
+Image CDN
+Cloudinary
+Product images with transforms
+Domain & DNS
+Namecheap / GoDaddy
+Custom domain
+SSL
+Let’s Encrypt (auto)
+HTTPS
+CI/CD
+GitHub Actions
+Auto test and deploy
+Monitoring
+Sentry
+Error tracking
+6. Security
+Measure
+Implementation
+Authentication
+JWT with refresh tokens, httpOnly cookies
+Password Hashing
+bcrypt (12 rounds)
+Input Validation
+Zod schemas on all endpoints
+Rate Limiting
+express-rate-limit on auth routes
+CORS
+Allowlist of trusted origins
+SQL Injection
+Prisma parameterized queries
+File Upload Safety
+Mime-type check, Cloudinary virus scan
+Admin Route Guard
+Role-based middleware (ADMIN role check)
+Environment Variables
+.env + dotenv, never committed
+HTTPS
+Enforced on all routes
+7. Development Environment
+Tool
+Purpose
+VS Code / Antigravity
+Primary IDE (Claude Sonnet 4.6)
+Git + GitHub
+Version control
+ESLint + Prettier
+Code quality
+Husky
+Pre-commit hooks
+Postman / Thunder Client
+API testing
+Docker (optional)
+Local DB containerization
+Node Version Manager (nvm)
+Node version management
+8. Environment Variables Reference
+# ServerPORT=5000NODE_ENV=production# DatabaseDATABASE_URL=postgresql://user:password@host:5432/sriramapooja# JWTJWT_SECRET=your_jwt_secretJWT_REFRESH_SECRET=your_refresh_secretJWT_EXPIRES_IN=7d# CloudinaryCLOUDINARY_CLOUD_NAME=your_cloudCLOUDINARY_API_KEY=your_keyCLOUDINARY_API_SECRET=your_secret# RazorpayRAZORPAY_KEY_ID=rzp_live_xxxRAZORPAY_KEY_SECRET=your_secret# RedisREDIS_URL=redis://default:password@host:6379# EmailSMTP_HOST=smtp.gmail.comSMTP_PORT=587SMTP_USER=sriramapoojastore@gmail.comSMTP_PASS=app_password# Frontend URLFRONTEND_URL=https://sriramapoojastore.com
+9. API Architecture
+RESTful API with /api/v1/ prefix
+JWT Bearer token authentication
+JSON request/response format
+Standardized error response format:
+{  "success": false,  "message": "Unauthorized",  "error": "TOKEN_EXPIRED"}
+Standardized success response:
+{  "success": true,  "data": {},  "message": "Product created successfully"}
+10. Third-Party Integrations
+Integration
+Purpose
+Provider
+Payment Gateway
+UPI, Cards, Wallets
+Razorpay
+Image CDN
+Product photo hosting
+Cloudinary
+Maps
+Store location embed
+Google Maps Embed API
+WhatsApp
+Order alerts, support chat
+WATI / Twilio
+Analytics
+User behavior tracking
+Google Analytics 4
+Email
+Transactional emails
+Gmail SMTP / Resend
+SMS OTP
+Phone verification
+Twilio / MSG91
