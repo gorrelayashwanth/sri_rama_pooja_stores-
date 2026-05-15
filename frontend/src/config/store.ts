@@ -10,7 +10,7 @@ export const STORE_INFO = {
   hours: "7:00 AM - 11:00 PM (Daily)",
   mapQuery:
     "Door No. 23, 11-116, Nageswara Rao Pantulu Rd, Rajan Killi Shop Center, Satyanarayana Puram, Vijayawada, Andhra Pradesh 520011",
-} as const;
+};
 
 const encodedMapQuery = encodeURIComponent(STORE_INFO.mapQuery);
 
