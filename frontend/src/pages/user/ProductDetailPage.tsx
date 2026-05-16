@@ -1,4 +1,4 @@
-import { ShoppingCart, Heart, Share2, ShieldCheck, Truck, RotateCcw, Star, Plus, Minus, Send, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ShoppingCart, Share2, ShieldCheck, Truck, RotateCcw, Star, Plus, Minus, Send, CheckCircle, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ProductCarousel } from "../../components/home/ProductCarousel";

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "../../store/authStore";
 import api from "../../api/axios";
 import { supabase } from "../../config/supabaseClient";
-import { Send, User, MessageCircle, Clock } from "lucide-react";
+import { Send, User, MessageCircle, Clock, Mail } from "lucide-react";
 
 interface Message {
   id: string;

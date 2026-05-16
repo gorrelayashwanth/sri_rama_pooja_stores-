@@ -1,4 +1,4 @@
-import { Phone, Mail, Globe, Send, Clock, MapPin } from "lucide-react";
+import { Phone, Send, Clock, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { STORE_LINKS } from "../../config/store";
 import { useSettings } from "../../context/SettingsContext";

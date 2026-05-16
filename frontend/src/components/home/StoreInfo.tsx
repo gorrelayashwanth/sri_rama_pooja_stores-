@@ -1,4 +1,4 @@
-import { MapPin, Clock, Phone, ExternalLink, Send } from "lucide-react";
+import { MapPin, Clock, Phone, ExternalLink } from "lucide-react";
 import { STORE_LINKS } from "../../config/store";
 import { useSettings } from "../../context/SettingsContext";
 

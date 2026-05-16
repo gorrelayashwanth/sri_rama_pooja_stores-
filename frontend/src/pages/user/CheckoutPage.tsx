@@ -6,7 +6,7 @@ import { useAuthStore } from "../../store/authStore";
 import api from "../../api/axios";
 
 export function CheckoutPage() {
-  const { items, totalAmount, clearCart } = useCartStore();
+  const { items, totalPrice, clearCart } = useCartStore();
   const { user } = useAuthStore();
   const navigate = useNavigate();
   
@@ -24,7 +24,7 @@ export function CheckoutPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const subtotal = totalAmount();
+  const subtotal = totalPrice();
   const shipping = subtotal > 1000 ? 0 : 99;
   const discount = appliedCoupon ? appliedCoupon.discountAmount : 0;
   const total = subtotal + shipping - discount;
