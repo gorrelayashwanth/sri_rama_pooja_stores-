@@ -82,7 +82,8 @@ export function AdminProductsPage() {
         params: { 
           page, 
           limit: 10,
-          search: searchTerm 
+          search: searchTerm,
+          all: true // Admin should see all products
         }
       });
       setProducts(response.data.data);
@@ -93,7 +94,7 @@ export function AdminProductsPage() {
       });
     } catch (error) {
       setProducts([]);
-      setLoadError(getErrorMessage(error, "Unable to load products right now. Check backend/database connection and try again."));
+      setLoadError(getErrorMessage(error, "Unable to load products. Please check your backend connection and database status."));
       setPagination({
         page,
         totalPages: 1,
@@ -103,6 +104,7 @@ export function AdminProductsPage() {
       setLoading(false);
     }
   };
+
 
   const fetchCategories = async () => {
     try {
@@ -208,29 +210,29 @@ export function AdminProductsPage() {
       
       <div className="p-6 md:p-8 space-y-6">
         {/* Actions Bar */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="flex items-center gap-4">
-            <div className="bg-[#2d4a2d] p-3 rounded-2xl">
-              <Package className="h-6 w-6 text-[#86efac]" />
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="flex items-center gap-5">
+            <div className="bg-[#2d4a2d] p-4 rounded-2xl shadow-lg shadow-green-100">
+              <Package className="h-7 w-7 text-[#86efac]" />
             </div>
             <div>
-              <h1 className="text-2xl font-playfair font-bold text-puja-text">Products</h1>
-              <p className="text-xs text-puja-muted font-medium uppercase tracking-widest">Manage your inventory</p>
+              <h1 className="text-3xl font-playfair font-black text-puja-text tracking-tight">Products</h1>
+              <p className="text-[10px] text-saffron-600 font-black uppercase tracking-[0.3em]">Manage Your Inventory</p>
             </div>
           </div>
           
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-            <div className="relative flex-1 md:w-72 group">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto">
+            <div className="relative flex-1 md:w-80 group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-saffron-500 transition-colors" />
               <input 
                 type="text" 
-                placeholder="Search products..."
+                placeholder="Search products by name or SKU..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-white border border-gray-100 rounded-xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100 transition-all shadow-sm"
+                className="w-full bg-white border border-gray-200 rounded-2xl py-4 pl-12 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-saffron-100 transition-all shadow-sm placeholder:text-gray-300"
               />
             </div>
-            <button className="p-3 bg-white border border-gray-100 rounded-xl text-puja-text hover:bg-gray-50 transition-all shadow-sm">
+            <button className="p-4 bg-white border border-gray-200 rounded-2xl text-puja-text hover:bg-saffron-50 hover:border-saffron-200 transition-all shadow-sm active:scale-95">
               <Filter className="h-5 w-5" />
             </button>
             <button
@@ -238,12 +240,13 @@ export function AdminProductsPage() {
                 setIsAddOpen(true);
                 setSubmitSuccess("");
               }}
-              className="bg-[#2d4a2d] text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#1a2b1a] transition-all shadow-lg shadow-green-100"
+              className="bg-[#2d4a2d] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 hover:bg-black transition-all shadow-xl shadow-green-100 active:scale-95"
             >
               <Plus className="h-5 w-5" /> Add Product
             </button>
           </div>
         </div>
+
 
         {submitSuccess && (
           <div className="rounded-2xl border border-green-100 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">

@@ -1,7 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Navbar } from "./components/layout/Navbar";
+import { SettingsProvider } from "./context/SettingsContext";
+
 import { Footer } from "./components/layout/Footer";
 import { AnnouncementBar } from "./components/layout/AnnouncementBar";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+
 
 import { HeroBanner } from "./components/home/HeroBanner";
 import { CategoryGrid } from "./components/home/CategoryGrid";
@@ -36,15 +40,18 @@ function HomePage() {
       <ProductCarousel 
         title="Bestselling Items" 
         subtitle="Most loved by our community of devotees"
+        type="bestselling"
       />
       <StoreInfo />
       <ProductCarousel 
         title="New Arrivals" 
         subtitle="Freshly curated items for your spiritual space"
+        type="newest"
       />
     </div>
   );
 }
+
 
 function AppShell() {
   const location = useLocation();
@@ -61,25 +68,26 @@ function AppShell() {
           <Route path="/collections/:category" element={<CollectionsPage />} />
           <Route path="/products/:slug" element={<ProductDetailPage />} />
           <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/account/*" element={<AccountPage />} />
+          <Route path="/account/*" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={<Navigate to="/admin/orders" replace />} />
-          <Route path="/admin/orders" element={<AdminOrdersPage />} />
-          <Route path="/admin/products" element={<AdminProductsPage />} />
-          <Route path="/admin/combos" element={<AdminCombosPage />} />
-          <Route path="/admin/reviews" element={<AdminReviewsPage />} />
-          <Route path="/admin/users" element={<AdminUsersPage />} />
-          <Route path="/admin/messages" element={<AdminMessagesPage />} />
-          <Route path="/admin/settings" element={<AdminSettingsPage />} />
-          <Route path="/admin/content" element={<AdminContentPage />} />
+          <Route path="/admin/orders" element={<ProtectedRoute requireAdmin><AdminOrdersPage /></ProtectedRoute>} />
+          <Route path="/admin/products" element={<ProtectedRoute requireAdmin><AdminProductsPage /></ProtectedRoute>} />
+          <Route path="/admin/combos" element={<ProtectedRoute requireAdmin><AdminCombosPage /></ProtectedRoute>} />
+          <Route path="/admin/reviews" element={<ProtectedRoute requireAdmin><AdminReviewsPage /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsersPage /></ProtectedRoute>} />
+          <Route path="/admin/messages" element={<ProtectedRoute requireAdmin><AdminMessagesPage /></ProtectedRoute>} />
+          <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><AdminSettingsPage /></ProtectedRoute>} />
+          <Route path="/admin/content" element={<ProtectedRoute requireAdmin><AdminContentPage /></ProtectedRoute>} />
           <Route path="/admin/*" element={<Navigate to="/admin/orders" replace />} />
+
         </Routes>
       </main>
       {!isAdminRoute && <Footer />}
@@ -90,9 +98,12 @@ function AppShell() {
 function App() {
   return (
     <BrowserRouter>
-      <AppShell />
+      <SettingsProvider>
+        <AppShell />
+      </SettingsProvider>
     </BrowserRouter>
   );
 }
+
 
 export default App;

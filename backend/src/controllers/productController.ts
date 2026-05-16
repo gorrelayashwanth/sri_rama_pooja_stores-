@@ -6,13 +6,16 @@ const getSingleParam = (value: string | string[] | undefined) =>
 
 export const getProducts = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { category, search, minPrice, maxPrice, page = 1, limit = 10 } = req.query;
+    const { category, search, minPrice, maxPrice, page = 1, limit = 10, all } = req.query;
     
     const skip = (Number(page) - 1) * Number(limit);
     
-    const where: any = {
-      isAvailable: true,
-    };
+    const where: any = {};
+
+    if (all !== 'true') {
+      where.isAvailable = true;
+    }
+
 
     if (category) {
       where.category = { slug: String(category) };

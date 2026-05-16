@@ -1,14 +1,17 @@
 import { Phone, MapPin } from "lucide-react";
 import heroImage from "../../assets/home/hero-store-interior.png";
 import { STORE_LINKS } from "../../config/store";
+import { useSettings } from "../../context/SettingsContext";
 
 export function HeroBanner() {
+  const { content, settings } = useSettings();
+
   return (
     <section className="relative h-[80vh] min-h-[600px] flex items-center justify-center overflow-hidden">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <img 
-          src={heroImage} 
+          src={settings?.logo || heroImage} 
           alt="Divine Pooja Space" 
           className="w-full h-full object-cover"
         />
@@ -23,21 +26,21 @@ export function HeroBanner() {
           </span>
         </div>
         
-        <h1 className="text-5xl md:text-7xl lg:text-8xl font-playfair font-bold text-white mb-6 tracking-tight leading-tight">
-          SRI RAMA POOJA <br /> STORE
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-playfair font-bold text-white mb-6 tracking-tight leading-tight uppercase whitespace-pre-line">
+          {content?.heroTitle || "SRI RAMA POOJA \n STORE"}
         </h1>
         
         <p className="text-saffron-100 text-xl md:text-2xl font-medium tracking-widest uppercase mb-4 max-w-3xl mx-auto">
-          Divine Puja Essentials For Every Home
+          {content?.heroSubtitle || "Divine Puja Essentials For Every Home"}
         </p>
         
         <p className="text-white/70 text-lg md:text-xl italic mb-12">
-          Vijayawada's Trusted Religious Goods Store
+          {settings?.address?.split(',').pop() || "Vijayawada's Trusted Religious Goods Store"}
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
           <a 
-            href={STORE_LINKS.tel}
+            href={`tel:${settings?.phone || "+919299207650"}`}
             className="w-full sm:w-auto bg-saffron-600 hover:bg-saffron-700 text-white px-10 py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all transform hover:scale-105 shadow-xl shadow-saffron-900/40"
           >
             <Phone className="h-5 w-5" /> CALL NOW
@@ -58,3 +61,4 @@ export function HeroBanner() {
     </section>
   );
 }
+

@@ -12,6 +12,13 @@ import mediaRoutes from "./routes/mediaRoutes";
 import comboRoutes from "./routes/comboRoutes";
 import orderRoutes from "./routes/orderRoutes";
 import messageRoutes from "./routes/messageRoutes";
+import settingRoutes from "./routes/settingRoutes";
+import contentRoutes from "./routes/contentRoutes";
+import couponRoutes from "./routes/couponRoutes";
+import userRoutes from "./routes/userRoutes";
+import reviewRoutes from "./routes/reviewRoutes";
+
+
 
 dotenv.config();
 
@@ -35,6 +42,13 @@ app.use("/api/v1/media", mediaRoutes);
 app.use("/api/v1/combos", comboRoutes);
 app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/messages", messageRoutes);
+app.use("/api/v1/settings", settingRoutes);
+app.use("/api/v1/content", contentRoutes);
+app.use("/api/v1/coupons", couponRoutes);
+app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/reviews", reviewRoutes);
+
+
 
 app.get("/api/v1/health", (req, res) => {
   res.status(200).json({ 
