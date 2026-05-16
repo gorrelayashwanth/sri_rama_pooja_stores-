@@ -2,8 +2,8 @@ import { ShoppingCart, Share2, ShieldCheck, Truck, RotateCcw, Star, Plus, Minus,
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ProductCarousel } from "../../components/home/ProductCarousel";
-import { useCartStore } from "../../store/cartStore";
 import { useAuthStore } from "../../store/authStore";
+import { useLanguage } from "../../context/LanguageContext";
 import api from "../../api/axios";
 import placeholderImage from "../../assets/pooja-placeholder.svg";
 
@@ -20,6 +20,7 @@ export function ProductDetailPage() {
   const [reviewError, setReviewError] = useState("");
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const addItem = useCartStore((state) => state.addItem);
+  const { t } = useLanguage();
 
   const fetchProduct = async () => {
     try {
@@ -99,7 +100,7 @@ export function ProductDetailPage() {
           <ChevronRight className="h-3 w-3 shrink-0" />
           <Link to={`/collections?category=${product.category?.id}`}>{product.category?.name}</Link>
           <ChevronRight className="h-3 w-3 shrink-0" />
-          <span className="text-puja-muted truncate">{product.name}</span>
+          <span className="text-puja-muted truncate">{t(product.name, product.translations, 'name')}</span>
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-24">
@@ -155,7 +156,7 @@ export function ProductDetailPage() {
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-playfair font-bold text-puja-text leading-[1.1] mb-6">
-              {product.name}
+              {t(product.name, product.translations, 'name')}
             </h1>
 
             <div className="flex items-end gap-4 mb-8">
@@ -169,7 +170,7 @@ export function ProductDetailPage() {
             </div>
 
             <p className="text-puja-muted leading-relaxed mb-10 text-lg italic border-l-4 border-saffron-100 pl-6 py-2">
-              {product.description}
+              {t(product.description, product.translations, 'description')}
             </p>
 
             {/* Actions */}
@@ -240,7 +241,7 @@ export function ProductDetailPage() {
             {activeTab === "description" && (
               <div className="max-w-4xl mx-auto space-y-12">
                 <div className="prose prose-puja max-w-none text-xl text-puja-muted leading-relaxed font-playfair italic">
-                  {product.description}
+                  {t(product.description, product.translations, 'description')}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="p-10 rounded-[3rem] bg-gray-50 border border-gray-100">
@@ -365,7 +366,87 @@ export function ProductDetailPage() {
                 </div>
               </div>
             )}
+
+            {activeTab === "specifications" && (
+              <div className="max-w-4xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 bg-gray-50 p-12 rounded-[3rem] border border-gray-100">
+                  <div className="space-y-4">
+                    <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-saffron-600">Product Essence</h5>
+                    <div className="space-y-3">
+                      <div className="flex justify-between py-2 border-b border-gray-200/50">
+                        <span className="text-sm font-bold text-puja-muted">SKU Code</span>
+                        <span className="text-sm font-black text-puja-text">{product.sku}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b border-gray-200/50">
+                        <span className="text-sm font-bold text-puja-muted">Category</span>
+                        <span className="text-sm font-black text-puja-text">{product.category?.name}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b border-gray-200/50">
+                        <span className="text-sm font-bold text-puja-muted">Subcategory</span>
+                        <span className="text-sm font-black text-puja-text">{product.subcategory || "N/A"}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b border-gray-200/50">
+                        <span className="text-sm font-bold text-puja-muted">Unit</span>
+                        <span className="text-sm font-black text-puja-text">{product.unit || "Piece"}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-saffron-600">Physical Attributes</h5>
+                    <div className="space-y-3">
+                      <div className="flex justify-between py-2 border-b border-gray-200/50">
+                        <span className="text-sm font-bold text-puja-muted">Material</span>
+                        <span className="text-sm font-black text-puja-text">{product.material || "Traditional Mix"}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b border-gray-200/50">
+                        <span className="text-sm font-bold text-puja-muted">Weight</span>
+                        <span className="text-sm font-black text-puja-text">{product.weight || "N/A"}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b border-gray-200/50">
+                        <span className="text-sm font-bold text-puja-muted">Dimensions</span>
+                        <span className="text-sm font-black text-puja-text">{product.dimensions || "N/A"}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b border-gray-200/50">
+                        <span className="text-sm font-bold text-puja-muted">Min Order Qty</span>
+                        <span className="text-sm font-black text-puja-text">{product.minOrderQty || 1}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Festivals & Deities */}
+                  {(product.festival?.length > 0 || product.deity?.length > 0) && (
+                    <div className="md:col-span-2 pt-8 space-y-4">
+                      <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-saffron-600">Religious Significance</h5>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {product.festival?.length > 0 && (
+                          <div>
+                            <span className="text-xs font-bold text-puja-muted block mb-3">Associated Festivals</span>
+                            <div className="flex flex-wrap gap-2">
+                              {product.festival.map((f: string) => (
+                                <span key={f} className="bg-saffron-50 text-saffron-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-saffron-100">{f}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {product.deity?.length > 0 && (
+                          <div>
+                            <span className="text-xs font-bold text-puja-muted block mb-3">Associated Deities</span>
+                            <div className="flex flex-wrap gap-2">
+                              {product.deity.map((d: string) => (
+                                <span key={d} className="bg-puja-text text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">{d}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
+        </div>
         </div>
 
         {/* Related Products */}

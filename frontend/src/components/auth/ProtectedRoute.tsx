@@ -11,7 +11,8 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   const location = useLocation();
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    const redirectPath = requireAdmin ? "/admin/login" : "/login";
+    return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
   if (requireAdmin && user?.role !== 'ADMIN' && user?.role !== 'CHIEF_ADMIN') {

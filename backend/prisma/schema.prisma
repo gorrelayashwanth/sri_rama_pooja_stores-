@@ -79,11 +79,23 @@ model Product {
   description   String
   price         Float
   salePrice     Float?
-  discount      Int?
+  discount      Int?           @default(0)
   sku           String         @unique
-  stock         Int            @default(0)
+  stock         Int            @default(100)
   isAvailable   Boolean        @default(true)
+  isFeatured    Boolean        @default(false)
   categoryId    String
+  subcategory   String?
+  unit          String?
+  minOrderQty   Int            @default(1)
+  material      String?
+  weight        String?
+  dimensions    String?
+  tags          String[]       @default([])
+  festival      String[]       @default([])
+  deity         String[]       @default([])
+  imagePrompt   String?
+  translations  Json?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   orderItems    OrderItem[]

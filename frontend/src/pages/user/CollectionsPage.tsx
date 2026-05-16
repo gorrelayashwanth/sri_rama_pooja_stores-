@@ -13,7 +13,10 @@ export function CollectionsPage() {
     sort: "newest",
     minPrice: 0,
     maxPrice: 10000,
-    inStock: false
+    inStock: false,
+    festival: "",
+    deity: "",
+    isSouthIndian: false
   });
 
   const fetchData = async () => {
@@ -86,7 +89,7 @@ export function CollectionsPage() {
                 <h3 className="font-playfair font-bold text-2xl text-puja-text">Refine</h3>
                 {(filters.category || filters.inStock) && (
                   <button 
-                    onClick={() => setFilters({ ...filters, category: "", inStock: false })}
+                    onClick={() => setFilters({ ...filters, category: "", inStock: false, festival: "", deity: "", isSouthIndian: false })}
                     className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-600 transition-colors"
                   >
                     Clear All
@@ -102,15 +105,55 @@ export function CollectionsPage() {
                     {categories.map(cat => (
                       <button 
                         key={cat.id}
-                        onClick={() => toggleCategory(cat.id)}
+                        onClick={() => toggleCategory(cat.slug)}
                         className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-all text-sm font-bold ${
-                          filters.category === cat.id 
+                          filters.category === cat.slug 
                             ? 'bg-saffron-50 border-saffron-200 text-saffron-700 translate-x-2' 
                             : 'bg-gray-50/50 border-transparent text-puja-text hover:bg-white hover:border-gray-100'
                         }`}
                       >
                         <span>{cat.name}</span>
                         <span className="text-[10px] opacity-40 font-medium">({cat._count?.products || 0})</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Festivals */}
+                <div>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-saffron-600 mb-5">Shop by Festival</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {["Diwali", "Navratri", "Ganesh Chaturthi", "Mahashivaratri", "Janmashtami"].map(fest => (
+                      <button 
+                        key={fest}
+                        onClick={() => setFilters(prev => ({ ...prev, festival: prev.festival === fest ? "" : fest }))}
+                        className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
+                          filters.festival === fest 
+                            ? 'bg-saffron-500 border-saffron-500 text-white shadow-lg shadow-saffron-200' 
+                            : 'bg-white border-gray-100 text-puja-muted hover:border-saffron-200'
+                        }`}
+                      >
+                        {fest}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Deities */}
+                <div>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-saffron-600 mb-5">Shop by Deity</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {["Ganesha", "Lakshmi", "Shiva", "Krishna", "Hanuman", "Durga"].map(deity => (
+                      <button 
+                        key={deity}
+                        onClick={() => setFilters(prev => ({ ...prev, deity: prev.deity === deity ? "" : deity }))}
+                        className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
+                          filters.deity === deity 
+                            ? 'bg-puja-text border-puja-text text-white shadow-lg shadow-gray-200' 
+                            : 'bg-white border-gray-100 text-puja-muted hover:border-gray-200'
+                        }`}
+                      >
+                        {deity}
                       </button>
                     ))}
                   </div>
@@ -137,7 +180,16 @@ export function CollectionsPage() {
                 </div>
 
                 {/* Availability */}
-                <div className="pt-6 border-t border-gray-50">
+                <div className="pt-6 border-t border-gray-50 space-y-4">
+                  <label className="flex items-center justify-between cursor-pointer group">
+                    <span className="text-xs font-bold text-puja-text group-hover:text-saffron-600 transition-colors">South Indian Items Only</span>
+                    <input 
+                      type="checkbox" 
+                      checked={filters.isSouthIndian}
+                      onChange={e => setFilters({...filters, isSouthIndian: e.target.checked})}
+                      className="w-6 h-6 rounded-lg border-gray-200 text-saffron-500 focus:ring-saffron-500 cursor-pointer" 
+                    />
+                  </label>
                   <label className="flex items-center justify-between cursor-pointer group">
                     <span className="text-xs font-bold text-puja-text group-hover:text-saffron-600 transition-colors">In Stock Only</span>
                     <input 

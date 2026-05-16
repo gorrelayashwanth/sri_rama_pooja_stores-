@@ -1,8 +1,15 @@
-import { Search, RefreshCw, Bell, ChevronDown } from "lucide-react";
-import { useAuthStore } from "../../store/authStore";
+import { Search, RefreshCw, Bell, ChevronDown, LogOut } from "lucide-react";
+import { useAdminAuthStore } from "../../store/adminAuthStore";
+import { useNavigate } from "react-router-dom";
 
 export function AdminHeader({ title, subtitle }: { title: string, subtitle?: string }) {
-  const { user } = useAuthStore();
+  const { adminUser: user, adminLogout: logout } = useAdminAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/admin/login");
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b border-gray-100 bg-white px-4 py-4 md:px-8">
@@ -49,6 +56,14 @@ export function AdminHeader({ title, subtitle }: { title: string, subtitle?: str
             <button className="relative p-2 text-gray-400 hover:text-saffron-500 transition-colors">
               <Bell className="h-5 w-5" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+            </button>
+
+            <button 
+              onClick={handleLogout}
+              className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="h-5 w-5" />
             </button>
 
             <div className="hidden h-10 w-px bg-gray-100 sm:block"></div>

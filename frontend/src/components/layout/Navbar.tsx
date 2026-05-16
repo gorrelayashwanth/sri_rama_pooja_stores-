@@ -3,11 +3,13 @@ import { ShoppingCart, Search, Menu, User, Heart, LogOut, ShieldCheck } from "lu
 import { useAuthStore } from "../../store/authStore";
 import { useCartStore } from "../../store/cartStore";
 import { useSettings } from "../../context/SettingsContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 export function Navbar() {
   const { isAuthenticated, user, logout } = useAuthStore();
   const totalItems = useCartStore((state) => state.totalItems());
   const { settings } = useSettings();
+  const { language, setLanguage } = useLanguage();
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'CHIEF_ADMIN';
 
@@ -43,6 +45,14 @@ export function Navbar() {
             Shop
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-saffron-500 transition-all group-hover:w-full" />
           </Link>
+          <Link to="/festivals" className="text-puja-text hover:text-saffron-600 text-[11px] font-black uppercase tracking-[0.2em] transition-all relative group">
+            Festivals
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-saffron-500 transition-all group-hover:w-full" />
+          </Link>
+          <Link to="/deities" className="text-puja-text hover:text-saffron-600 text-[11px] font-black uppercase tracking-[0.2em] transition-all relative group">
+            Deities
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-saffron-500 transition-all group-hover:w-full" />
+          </Link>
           <Link to="/about" className="text-puja-text hover:text-saffron-600 text-[11px] font-black uppercase tracking-[0.2em] transition-all relative group">
             About
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-saffron-500 transition-all group-hover:w-full" />
@@ -55,6 +65,15 @@ export function Navbar() {
 
 
         <div className="flex items-center space-x-5">
+          <select 
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as any)}
+            className="hidden md:block bg-transparent text-[10px] font-black text-puja-text uppercase tracking-widest cursor-pointer focus:outline-none"
+          >
+            <option value="en">EN</option>
+            <option value="hi">HI</option>
+            <option value="te">TE</option>
+          </select>
           <button className="text-puja-text hover:text-saffron-500 transition">
             <Search className="h-5 w-5" />
           </button>

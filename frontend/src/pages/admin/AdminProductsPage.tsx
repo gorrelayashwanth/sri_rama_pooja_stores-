@@ -13,7 +13,8 @@ import {
   CheckCircle2,
   XCircle,
   Package,
-  X
+  X,
+  Sparkles
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import api from "../../api/axios";
@@ -36,9 +37,20 @@ const createInitialFormData = () => ({
   salePrice: "",
   discount: "",
   sku: "",
-  stock: "0",
+  stock: "100",
   categoryId: "",
   imageUrl: "",
+  subcategory: "",
+  unit: "",
+  minOrderQty: "1",
+  material: "",
+  weight: "",
+  dimensions: "",
+  tags: "",
+  festival: "",
+  deity: "",
+  imagePrompt: "",
+  isFeatured: false,
 });
 
 const slugify = (value: string) =>
@@ -69,6 +81,8 @@ export function AdminProductsPage() {
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
+  const [bulkInput, setBulkInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
@@ -153,15 +167,15 @@ export function AdminProductsPage() {
 
     try {
       await api.post("/products", {
-        name: formData.name,
-        slug: formData.slug,
-        description: formData.description,
+        ...formData,
         price: Number(formData.price),
         salePrice: formData.salePrice ? Number(formData.salePrice) : null,
-        discount: formData.discount ? Number(formData.discount) : null,
-        sku: formData.sku,
-        stock: Number(formData.stock || "0"),
-        categoryId: formData.categoryId,
+        discount: formData.discount ? Number(formData.discount) : 0,
+        stock: Number(formData.stock || "100"),
+        minOrderQty: Number(formData.minOrderQty || "1"),
+        tags: formData.tags.split(",").map(t => t.trim()).filter(t => t),
+        festival: formData.festival.split(",").map(f => f.trim()).filter(f => f),
+        deity: formData.deity.split(",").map(d => d.trim()).filter(d => d),
         images: formData.imageUrl
           ? [{ url: formData.imageUrl, publicId: `manual-${formData.slug}` }]
           : [],
@@ -178,6 +192,34 @@ export function AdminProductsPage() {
           "Could not create the product. Make sure admin login and backend database are working."
         )
       );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBulkImport = async () => {
+    if (!bulkInput.trim()) {
+      setSubmitError("Please provide JSON array data.");
+      return;
+    }
+    setIsSubmitting(true);
+    setSubmitError("");
+    setSubmitSuccess("");
+    try {
+      let data;
+      try {
+        data = JSON.parse(bulkInput);
+      } catch (e) {
+        throw new Error("Invalid JSON format.");
+      }
+      
+      const res = await api.post("/products/bulk", { products: Array.isArray(data) ? data : [data] });
+      setSubmitSuccess(res.data.message || "Bulk import successful.");
+      setIsBulkOpen(false);
+      setBulkInput("");
+      fetchProducts(1);
+    } catch (error) {
+      setSubmitError(getErrorMessage(error, "Bulk import failed. Please check your data format."));
     } finally {
       setIsSubmitting(false);
     }
@@ -201,6 +243,19 @@ export function AdminProductsPage() {
       setProducts(products.filter(p => p.id !== id));
     } catch (error) {
       console.error("Failed to delete product:", error);
+    }
+  };
+
+  const handleGenerateImage = async (id: string) => {
+    try {
+      setLoadError("");
+      const res = await api.post(`/products/${id}/generate-image`);
+      if (res.data.success) {
+        alert("Image generated successfully!");
+        fetchProducts(pagination.page); // Refresh to show new image
+      }
+    } catch (error) {
+      alert(getErrorMessage(error, "Failed to generate image. Does it have an image prompt?"));
     }
   };
 
@@ -237,8 +292,19 @@ export function AdminProductsPage() {
             </button>
             <button
               onClick={() => {
+                setIsBulkOpen(true);
+                setSubmitSuccess("");
+                setSubmitError("");
+              }}
+              className="bg-white border border-gray-200 text-puja-text px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 hover:bg-gray-50 transition-all shadow-sm active:scale-95"
+            >
+              Bulk Import
+            </button>
+            <button
+              onClick={() => {
                 setIsAddOpen(true);
                 setSubmitSuccess("");
+                setSubmitError("");
               }}
               className="bg-[#2d4a2d] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 hover:bg-black transition-all shadow-xl shadow-green-100 active:scale-95"
             >
@@ -346,6 +412,13 @@ export function AdminProductsPage() {
                       </td>
                       <td className="px-8 py-4 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={() => handleGenerateImage(product.id)}
+                            className="p-2 text-gray-400 hover:text-saffron-500 transition-colors"
+                            title="AI Generate Image"
+                          >
+                            <Sparkles className="h-4 w-4" />
+                          </button>
                           <button className="p-2 text-gray-400 hover:text-puja-text transition-colors">
                             <Eye className="h-4 w-4" />
                           </button>
@@ -511,6 +584,103 @@ export function AdminProductsPage() {
                     ))}
                   </select>
                 </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-bold text-puja-text">Subcategory</span>
+                  <input
+                    value={formData.subcategory}
+                    onChange={(e) => setFormData(prev => ({ ...prev, subcategory: e.target.value }))}
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-bold text-puja-text">Unit (e.g. piece, pack)</span>
+                  <input
+                    value={formData.unit}
+                    onChange={(e) => setFormData(prev => ({ ...prev, unit: e.target.value }))}
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-bold text-puja-text">Min Order Qty</span>
+                  <input
+                    type="number"
+                    value={formData.minOrderQty}
+                    onChange={(e) => setFormData(prev => ({ ...prev, minOrderQty: e.target.value }))}
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-bold text-puja-text">Material</span>
+                  <input
+                    value={formData.material}
+                    onChange={(e) => setFormData(prev => ({ ...prev, material: e.target.value }))}
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-bold text-puja-text">Weight</span>
+                  <input
+                    value={formData.weight}
+                    onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-bold text-puja-text">Dimensions</span>
+                  <input
+                    value={formData.dimensions}
+                    onChange={(e) => setFormData(prev => ({ ...prev, dimensions: e.target.value }))}
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-bold text-puja-text">Is Featured?</span>
+                  <div className="flex items-center gap-2 py-3">
+                    <input
+                      type="checkbox"
+                      checked={formData.isFeatured}
+                      onChange={(e) => setFormData(prev => ({ ...prev, isFeatured: e.target.checked }))}
+                      className="h-5 w-5 rounded border-gray-300 text-saffron-600 focus:ring-saffron-500"
+                    />
+                    <span className="text-sm text-gray-600">Featured Product</span>
+                  </div>
+                </label>
+                <label className="space-y-2 md:col-span-2">
+                  <span className="text-sm font-bold text-puja-text">Tags (comma separated)</span>
+                  <input
+                    value={formData.tags}
+                    onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
+                    placeholder="e.g. agarbatti, incense, rose"
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-bold text-puja-text">Festivals (comma separated)</span>
+                  <input
+                    value={formData.festival}
+                    onChange={(e) => setFormData(prev => ({ ...prev, festival: e.target.value }))}
+                    placeholder="e.g. Diwali, Navratri"
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-bold text-puja-text">Deities (comma separated)</span>
+                  <input
+                    value={formData.deity}
+                    onChange={(e) => setFormData(prev => ({ ...prev, deity: e.target.value }))}
+                    placeholder="e.g. Ganesha, Lakshmi"
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100"
+                  />
+                </label>
+                <label className="space-y-2 md:col-span-2">
+                  <span className="text-sm font-bold text-puja-text">AI Image Prompt</span>
+                  <textarea
+                    rows={2}
+                    value={formData.imagePrompt}
+                    onChange={(e) => setFormData(prev => ({ ...prev, imagePrompt: e.target.value }))}
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100"
+                  />
+                </label>
                 <label className="space-y-2 md:col-span-2">
                   <span className="text-sm font-bold text-puja-text">Image URL</span>
                   <input
@@ -544,6 +714,57 @@ export function AdminProductsPage() {
                   className="rounded-2xl bg-[#2d4a2d] px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-[#1a2b1a] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSubmitting ? "Saving..." : "Save Product"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isBulkOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-2xl overflow-hidden rounded-[32px] border border-gray-100 bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5 md:px-8">
+                <div>
+                  <h2 className="text-2xl font-playfair font-bold text-puja-text">Bulk Import Products</h2>
+                  <p className="text-sm text-puja-muted">Paste a JSON array of products to import.</p>
+                </div>
+                <button
+                  onClick={() => setIsBulkOpen(false)}
+                  className="rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-puja-text"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="p-6 md:p-8">
+                <textarea
+                  rows={10}
+                  value={bulkInput}
+                  onChange={(e) => setBulkInput(e.target.value)}
+                  placeholder={'[\n  {\n    "name": "Agarbatti",\n    "categoryId": "cat-inc",\n    "price": 50\n  }\n]'}
+                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-saffron-100"
+                />
+              </div>
+
+              {submitError && (
+                <div className="mx-6 mb-2 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 md:mx-8">
+                  {submitError}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-3 border-t border-gray-100 px-6 py-5 md:flex-row md:items-center md:justify-end md:px-8">
+                <button
+                  onClick={() => setIsBulkOpen(false)}
+                  className="rounded-2xl border border-gray-200 px-5 py-3 text-sm font-bold text-puja-text transition-colors hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBulkImport}
+                  disabled={isSubmitting}
+                  className="rounded-2xl bg-[#2d4a2d] px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-[#1a2b1a] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSubmitting ? "Importing..." : "Import Products"}
                 </button>
               </div>
             </div>

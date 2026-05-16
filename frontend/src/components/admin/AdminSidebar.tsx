@@ -1,4 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAdminAuthStore } from "../../store/adminAuthStore";
 import { 
   ShoppingBag, 
   Package, 
@@ -26,6 +27,13 @@ const navItems = [
 
 export function AdminSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const adminLogout = useAdminAuthStore((state) => state.adminLogout);
+
+  const handleLogout = () => {
+    adminLogout();
+    navigate("/admin/login");
+  };
 
   return (
     <aside className="w-full bg-[#1a2b1a] text-white lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:w-64 flex flex-col border-r border-white/10">
@@ -83,6 +91,7 @@ export function AdminSidebar() {
           Go to Store
         </Link>
         <button 
+          onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-400/5 rounded-xl transition-all text-sm font-medium"
         >
           <LogOut className="h-5 w-5" />
