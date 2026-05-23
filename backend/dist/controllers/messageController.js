@@ -12,11 +12,13 @@ const getMessages = async (req, res, next) => {
         const skip = (Number(page) - 1) * Number(limit);
         const [messages, total] = await Promise.all([
             prisma_1.default.message.findMany({
+                where: { parentId: null }, // Only get top-level messages
+                include: { replies: { orderBy: { createdAt: 'asc' } } },
                 skip,
                 take: Number(limit),
                 orderBy: { createdAt: 'desc' }
             }),
-            prisma_1.default.message.count()
+            prisma_1.default.message.count({ where: { parentId: null } })
         ]);
         res.status(200).json({
             success: true,
@@ -67,9 +69,17 @@ const deleteMessage = async (req, res, next) => {
 exports.deleteMessage = deleteMessage;
 const createMessage = async (req, res, next) => {
     try {
-        const { name, email, phone, subject, message } = req.body;
+        const { name, email, phone, subject, message, parentId, isAdmin } = req.body;
         const newMessage = await prisma_1.default.message.create({
-            data: { name, email, phone, subject, message }
+            data: {
+                name,
+                email,
+                phone,
+                subject,
+                message,
+                parentId: parentId || null,
+                isAdmin: isAdmin || false
+            }
         });
         res.status(201).json({ success: true, message: 'Message sent successfully', data: newMessage });
     }

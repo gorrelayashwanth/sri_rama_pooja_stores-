@@ -17,6 +17,11 @@ const mediaRoutes_1 = __importDefault(require("./routes/mediaRoutes"));
 const comboRoutes_1 = __importDefault(require("./routes/comboRoutes"));
 const orderRoutes_1 = __importDefault(require("./routes/orderRoutes"));
 const messageRoutes_1 = __importDefault(require("./routes/messageRoutes"));
+const settingRoutes_1 = __importDefault(require("./routes/settingRoutes"));
+const contentRoutes_1 = __importDefault(require("./routes/contentRoutes"));
+const couponRoutes_1 = __importDefault(require("./routes/couponRoutes"));
+const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
+const reviewRoutes_1 = __importDefault(require("./routes/reviewRoutes"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 // Middleware
@@ -36,6 +41,11 @@ app.use("/api/v1/media", mediaRoutes_1.default);
 app.use("/api/v1/combos", comboRoutes_1.default);
 app.use("/api/v1/orders", orderRoutes_1.default);
 app.use("/api/v1/messages", messageRoutes_1.default);
+app.use("/api/v1/settings", settingRoutes_1.default);
+app.use("/api/v1/content", contentRoutes_1.default);
+app.use("/api/v1/coupons", couponRoutes_1.default);
+app.use("/api/v1/users", userRoutes_1.default);
+app.use("/api/v1/reviews", reviewRoutes_1.default);
 app.get("/api/v1/health", (req, res) => {
     res.status(200).json({
         success: true,

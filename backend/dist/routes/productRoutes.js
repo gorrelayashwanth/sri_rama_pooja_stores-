@@ -7,6 +7,8 @@ const router = (0, express_1.Router)();
 router.get('/', productController_1.getProducts);
 router.get('/:slug', productController_1.getProductBySlug);
 // Protected Admin Routes
+router.post('/bulk', authMiddleware_1.authenticate, authMiddleware_1.authorizeAdmin, productController_1.importProductsBulk);
+router.post('/:id/generate-image', authMiddleware_1.authenticate, authMiddleware_1.authorizeAdmin, productController_1.generateImage);
 router.post('/', authMiddleware_1.authenticate, authMiddleware_1.authorizeAdmin, productController_1.createProduct);
 router.put('/:id', authMiddleware_1.authenticate, authMiddleware_1.authorizeAdmin, productController_1.updateProduct);
 router.delete('/:id', authMiddleware_1.authenticate, authMiddleware_1.authorizeAdmin, productController_1.deleteProduct);
