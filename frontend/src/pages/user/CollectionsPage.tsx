@@ -218,7 +218,7 @@ export function CollectionsPage() {
                 <h3 className="text-2xl font-playfair font-bold text-puja-text mb-2">No items found</h3>
                 <p className="text-puja-muted mb-8 italic">Try adjusting your filters to find what you're looking for.</p>
                 <button 
-                  onClick={() => setFilters({ category: "", sort: "newest", minPrice: 0, maxPrice: 10000, inStock: false })}
+                  onClick={() => setFilters({ category: "", sort: "newest", minPrice: 0, maxPrice: 10000, inStock: false, festival: "", deity: "", isSouthIndian: false })}
                   className="bg-saffron-500 text-white px-10 py-4 rounded-2xl font-bold hover:bg-saffron-600 transition-all shadow-lg shadow-saffron-100"
                 >
                   Reset All Filters

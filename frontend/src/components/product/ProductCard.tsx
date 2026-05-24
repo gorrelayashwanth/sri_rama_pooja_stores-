@@ -1,7 +1,7 @@
 import { ShoppingCart, Heart, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCartStore } from "../../store/cartStore";
-import { Product } from "../../types";
+import type { Product } from "../../types";
 import { useLanguage } from "../../context/LanguageContext";
 
 interface ProductCardProps {
@@ -16,7 +16,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    addItem({ ...product, quantity: 1 });
+    addItem({ ...product, image: productImage, quantity: 1 } as any);
   };
 
   return (
@@ -26,7 +26,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <Link to={`/products/${product.slug}`}>
           <img 
             src={productImage} 
-            alt={t(product.name, product.translations, 'name')}
+            alt={t(product.name, (product as any).translations, 'name')}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
         </Link>
@@ -76,7 +76,7 @@ export function ProductCard({ product }: ProductCardProps) {
         
         <Link to={`/products/${product.slug}`} className="hover:text-saffron-600 transition-colors">
           <h3 className="font-playfair font-bold text-puja-text text-base line-clamp-2 mb-3 min-h-[48px] leading-tight">
-            {t(product.name, product.translations, 'name')}
+            {t(product.name, (product as any).translations, 'name')}
           </h3>
         </Link>
         
