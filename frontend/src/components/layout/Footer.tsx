@@ -132,11 +132,10 @@ export function Footer() {
 
         <div className="border-t border-white/5 pt-8 text-center">
           <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest">
-            {settings?.address?.split(',').pop()?.trim() || "Vijayawada"} • © 2026 {settings?.storeName || "Sri Rama Pooja Store"}
+            {settings?.address?.split?.(',')?.pop()?.trim() || "Vijayawada"} • © 2026 {settings?.storeName || "Sri Rama Pooja Store"}
           </p>
         </div>
       </div>
     </footer>
   );
 }
-

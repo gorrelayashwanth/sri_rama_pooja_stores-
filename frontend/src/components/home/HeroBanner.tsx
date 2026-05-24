@@ -40,7 +40,7 @@ export function HeroBanner() {
         </div>
         
         <h1 className={`text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-playfair font-black text-white mb-6 tracking-tighter leading-[0.9] uppercase transition-all duration-1000 delay-500 ${imageLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          {content?.heroTitle?.split('\n').map((line, i) => (
+          {content?.heroTitle?.split('\n')?.map((line, i) => (
             <span key={i} className="block">{line}</span>
           )) || (
             <>
@@ -55,7 +55,7 @@ export function HeroBanner() {
         </p>
         
         <p className="text-white/70 text-lg md:text-xl italic mb-12">
-          {settings?.address?.split(',').pop() || "Vijayawada's Trusted Religious Goods Store"}
+          {settings?.address?.split(',')?.pop() || "Vijayawada's Trusted Religious Goods Store"}
         </p>
 
         <div className={`flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-8 transition-all duration-1000 delay-1000 ${imageLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
@@ -75,7 +75,7 @@ export function HeroBanner() {
           </a>
         </div>
         <p className={`mt-12 text-white/40 text-xs md:text-sm italic transition-all duration-1000 delay-[1200ms] ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}>
-          {settings?.address?.split(',').pop() || "Vijayawada's Trusted Religious Goods Store Since Decades"}
+          {settings?.address?.split(',')?.pop() || "Vijayawada's Trusted Religious Goods Store Since Decades"}
         </p>
       </div>
 
