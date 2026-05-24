@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "prisma:generate": "prisma generate",
     "postinstall": "npm run prisma:generate",
     "dev": "ts-node-dev --respawn src/index.ts",
