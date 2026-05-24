@@ -40,9 +40,9 @@ export function HeroBanner() {
         </div>
         
         <h1 className={`text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-playfair font-black text-white mb-6 tracking-tighter leading-[0.9] uppercase transition-all duration-1000 delay-500 ${imageLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          {content?.heroTitle?.split('\n')?.map((line, i) => (
+          {content?.heroTitle?.trim() ? content.heroTitle.split('\n').map((line, i) => (
             <span key={i} className="block">{line}</span>
-          )) || (
+          )) : (
             <>
               <span className="block">SRI RAMA</span>
               <span className="text-saffron-500">POOJA STORE</span>
@@ -51,11 +51,11 @@ export function HeroBanner() {
         </h1>
         
         <p className={`text-saffron-100 text-lg md:text-2xl font-medium tracking-[0.2em] uppercase mb-8 max-w-3xl mx-auto transition-all duration-1000 delay-700 ${imageLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          {content?.heroSubtitle || "Divine Puja Essentials For Every Home"}
+          {content?.heroSubtitle?.trim() || "Divine Puja Essentials For Every Home"}
         </p>
         
         <p className="text-white/70 text-lg md:text-xl italic mb-12">
-          {settings?.address?.split(',')?.pop() || "Vijayawada's Trusted Religious Goods Store"}
+          {settings?.address?.trim()?.split(',')?.pop() || "Vijayawada's Trusted Religious Goods Store"}
         </p>
 
         <div className={`flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-8 transition-all duration-1000 delay-1000 ${imageLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>

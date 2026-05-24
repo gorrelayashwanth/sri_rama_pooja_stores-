@@ -58,6 +58,7 @@ export function ContactPage() {
       await api.post('/messages', formData);
       setSuccess(true);
       setFormData({ ...formData, subject: "", message: "" });
+      fetchMyMessages(); // Fetch immediately after sending
       setTimeout(() => setSuccess(false), 5000);
     } catch (error) {
       console.error("Failed to send message", error);

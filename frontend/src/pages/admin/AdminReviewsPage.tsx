@@ -56,6 +56,7 @@ export function AdminReviewsPage() {
     if (!window.confirm("Are you sure you want to delete this review?")) return;
     try {
       await api.delete(`/reviews/${id}`);
+      fetchReviews();
     } catch (error) {
       console.error("Failed to delete review", error);
     }

@@ -1,4 +1,4 @@
-import { ChevronRight, CreditCard, MapPin, Package, Percent, ShoppingBag, Truck, Lock, ShieldCheck } from "lucide-react";
+import { ChevronRight, CreditCard, MapPin, Package, Percent, ShoppingBag, Truck, Lock, ShieldCheck, ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCartStore } from "../../store/cartStore";
@@ -341,6 +341,4 @@ export function CheckoutPage() {
       </div>
     </div>
   );
-}
-
-import { ArrowRight } from "lucide-react";
+}

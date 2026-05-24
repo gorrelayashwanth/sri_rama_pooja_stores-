@@ -24,7 +24,11 @@ export function AdminSettingsPage() {
     try {
       const response = await api.get('/settings');
       if (response.data.data) {
-        setSettings(response.data.data);
+        const fetchedSettings = response.data.data;
+        if (typeof fetchedSettings.workingHours === 'string') {
+          fetchedSettings.workingHours = fetchedSettings.workingHours.replace(/(^"|"$)/g, '');
+        }
+        setSettings(fetchedSettings);
       }
     } catch (error) {
       console.error("Failed to fetch settings", error);

@@ -73,6 +73,7 @@ export function AdminMessagesPage() {
         subject: `Reply to: ${name}`
       });
       setReplyText({ ...replyText, [parentId]: "" });
+      fetchMessages(); // Fetch immediately after replying
     } catch (error) {
       console.error("Failed to send reply:", error);
     } finally {
@@ -83,6 +84,7 @@ export function AdminMessagesPage() {
   const markRead = async (id: string) => {
     try {
       await api.patch(`/messages/${id}/read`);
+      fetchMessages();
     } catch (error) {
       console.error("Failed to mark read:", error);
     }
@@ -92,6 +94,7 @@ export function AdminMessagesPage() {
     if (!window.confirm("Delete this message and all replies?")) return;
     try {
       await api.delete(`/messages/${id}`);
+      fetchMessages();
     } catch (error) {
       console.error("Failed to delete message:", error);
     }

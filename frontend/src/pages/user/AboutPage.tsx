@@ -18,7 +18,9 @@ export function AboutPage() {
         </div>
         <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 mt-10">
           <h2 className="text-2xl font-bold text-puja-text mb-4">Store Working Hours</h2>
-          <p className="text-xl font-bold text-saffron-600 font-playfair">{settings?.workingHours || "10:00 AM - 09:00 PM"}</p>
+          <p className="text-xl font-bold text-saffron-600 font-playfair">
+            {settings?.workingHours?.replace?.(/(^"|"$)/g, '') || "10:00 AM - 09:00 PM"}
+          </p>
         </div>
       </div>
     </div>
