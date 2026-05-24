@@ -6,7 +6,6 @@ import {
   Edit3, 
   Trash2, 
   Eye, 
-  MoreVertical,
   ChevronLeft,
   ChevronRight,
   Filter,
@@ -81,6 +80,7 @@ export function AdminProductsPage() {
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [bulkInput, setBulkInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -153,7 +153,60 @@ export function AdminProductsPage() {
   const resetForm = () => {
     setFormData(createInitialFormData());
     setSubmitError("");
+    setEditingProductId(null);
   };
+
+  const openCreateModal = () => {
+    resetForm();
+    setIsAddOpen(true);
+    setSubmitSuccess("");
+    setSubmitError("");
+  };
+
+  const openEditModal = (product: Product) => {
+    setEditingProductId(product.id);
+    setFormData({
+      name: product.name,
+      slug: product.slug,
+      description: product.description || "",
+      price: String(product.price),
+      salePrice: product.salePrice ? String(product.salePrice) : "",
+      discount: product.discount ? String(product.discount) : "",
+      sku: product.sku,
+      stock: String(product.stock ?? 100),
+      categoryId: product.categoryId || product.category?.id || "",
+      imageUrl: product.images?.[0]?.url || "",
+      subcategory: product.subcategory || "",
+      unit: product.unit || "",
+      minOrderQty: String(product.minOrderQty ?? 1),
+      material: product.material || "",
+      weight: product.weight || "",
+      dimensions: product.dimensions || "",
+      tags: (product.tags || []).join(", "),
+      festival: (product.festival || []).join(", "),
+      deity: (product.deity || []).join(", "),
+      imagePrompt: product.imagePrompt || "",
+      isFeatured: Boolean(product.isFeatured),
+    });
+    setIsAddOpen(true);
+    setSubmitSuccess("");
+    setSubmitError("");
+  };
+
+  const buildProductPayload = () => ({
+    ...formData,
+    price: Number(formData.price),
+    salePrice: formData.salePrice ? Number(formData.salePrice) : null,
+    discount: formData.discount ? Number(formData.discount) : 0,
+    stock: Number(formData.stock || "100"),
+    minOrderQty: Number(formData.minOrderQty || "1"),
+    tags: formData.tags.split(",").map((t) => t.trim()).filter(Boolean),
+    festival: formData.festival.split(",").map((f) => f.trim()).filter(Boolean),
+    deity: formData.deity.split(",").map((d) => d.trim()).filter(Boolean),
+    images: formData.imageUrl
+      ? [{ url: formData.imageUrl, publicId: `manual-${formData.slug}` }]
+      : [],
+  });
 
   const handleCreateProduct = async () => {
     if (!formData.name || !formData.slug || !formData.description || !formData.price || !formData.sku || !formData.categoryId) {
@@ -166,20 +219,7 @@ export function AdminProductsPage() {
     setSubmitSuccess("");
 
     try {
-      await api.post("/products", {
-        ...formData,
-        price: Number(formData.price),
-        salePrice: formData.salePrice ? Number(formData.salePrice) : null,
-        discount: formData.discount ? Number(formData.discount) : 0,
-        stock: Number(formData.stock || "100"),
-        minOrderQty: Number(formData.minOrderQty || "1"),
-        tags: formData.tags.split(",").map(t => t.trim()).filter(t => t),
-        festival: formData.festival.split(",").map(f => f.trim()).filter(f => f),
-        deity: formData.deity.split(",").map(d => d.trim()).filter(d => d),
-        images: formData.imageUrl
-          ? [{ url: formData.imageUrl, publicId: `manual-${formData.slug}` }]
-          : [],
-      });
+      await api.post("/products", buildProductPayload());
 
       setSubmitSuccess("Product created successfully.");
       setIsAddOpen(false);
@@ -192,6 +232,30 @@ export function AdminProductsPage() {
           "Could not create the product. Make sure admin login and backend database are working."
         )
       );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateProduct = async () => {
+    if (!editingProductId) return;
+    if (!formData.name || !formData.slug || !formData.description || !formData.price || !formData.sku || !formData.categoryId) {
+      setSubmitError("Please fill the required product fields before saving.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError("");
+    setSubmitSuccess("");
+
+    try {
+      await api.put(`/products/${editingProductId}`, buildProductPayload());
+      setSubmitSuccess("Product updated successfully.");
+      setIsAddOpen(false);
+      resetForm();
+      fetchProducts(pagination.page);
+    } catch (error) {
+      setSubmitError(getErrorMessage(error, "Could not update the product."));
     } finally {
       setIsSubmitting(false);
     }
@@ -301,11 +365,7 @@ export function AdminProductsPage() {
               Bulk Import
             </button>
             <button
-              onClick={() => {
-                setIsAddOpen(true);
-                setSubmitSuccess("");
-                setSubmitError("");
-              }}
+              onClick={openCreateModal}
               className="bg-[#2d4a2d] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 hover:bg-black transition-all shadow-xl shadow-green-100 active:scale-95"
             >
               <Plus className="h-5 w-5" /> Add Product
@@ -383,8 +443,10 @@ export function AdminProductsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <span className="text-sm font-black text-puja-text">₹{product.salePrice || product.price}</span>
-                          {product.salePrice && (
+                          <span className="text-sm font-black text-puja-text">
+                            ₹{(product.salePrice && product.salePrice > 0 ? product.salePrice : product.price).toLocaleString("en-IN")}
+                          </span>
+                          {product.salePrice != null && product.salePrice > 0 && product.salePrice < product.price && (
                             <span className="text-[10px] text-gray-400 line-through">₹{product.price}</span>
                           )}
                         </div>
@@ -411,28 +473,38 @@ export function AdminProductsPage() {
                         </button>
                       </td>
                       <td className="px-8 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-1 md:gap-2">
                           <button 
+                            type="button"
                             onClick={() => handleGenerateImage(product.id)}
-                            className="p-2 text-gray-400 hover:text-saffron-500 transition-colors"
-                            title="AI Generate Image"
+                            className="p-2.5 text-gray-400 hover:text-saffron-500 hover:bg-saffron-50 rounded-xl transition-colors"
+                            title="Generate Image"
                           >
                             <Sparkles className="h-4 w-4" />
                           </button>
-                          <button className="p-2 text-gray-400 hover:text-puja-text transition-colors">
+                          <button
+                            type="button"
+                            onClick={() => window.open(`/products/${product.slug}`, "_blank")}
+                            className="p-2.5 text-gray-400 hover:text-puja-text hover:bg-gray-50 rounded-xl transition-colors"
+                            title="View on store"
+                          >
                             <Eye className="h-4 w-4" />
                           </button>
-                          <button className="p-2 text-gray-400 hover:text-saffron-600 transition-colors">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(product)}
+                            className="p-2.5 text-gray-400 hover:text-saffron-600 hover:bg-saffron-50 rounded-xl transition-colors"
+                            title="Edit product"
+                          >
                             <Edit3 className="h-4 w-4" />
                           </button>
                           <button 
+                            type="button"
                             onClick={() => deleteProduct(product.id)}
-                            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                            className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                            title="Delete product"
                           >
                             <Trash2 className="h-4 w-4" />
-                          </button>
-                          <button className="p-2 text-gray-400 hover:text-puja-text transition-colors">
-                            <MoreVertical className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
@@ -481,14 +553,19 @@ export function AdminProductsPage() {
         </div>
 
         {isAddOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-4xl overflow-hidden rounded-[32px] border border-gray-100 bg-white shadow-2xl">
-              <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5 md:px-8">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">
+            <div className="w-full sm:max-w-4xl max-h-[100dvh] sm:max-h-[90vh] flex flex-col rounded-t-[28px] sm:rounded-[32px] border border-gray-100 bg-white shadow-2xl">
+              <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4 md:px-8 md:py-5">
                 <div>
-                  <h2 className="text-2xl font-playfair font-bold text-puja-text">Add New Product</h2>
-                  <p className="text-sm text-puja-muted">Create a product record from the admin panel.</p>
+                  <h2 className="text-xl md:text-2xl font-playfair font-bold text-puja-text">
+                    {editingProductId ? "Edit Product" : "Add New Product"}
+                  </h2>
+                  <p className="text-sm text-puja-muted">
+                    {editingProductId ? "Update product details and save." : "Create a product record from the admin panel."}
+                  </p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => {
                     setIsAddOpen(false);
                     resetForm();
@@ -499,7 +576,8 @@ export function AdminProductsPage() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 gap-5 px-6 py-6 md:grid-cols-2 md:px-8">
+              <div className="flex-1 overflow-y-auto overscroll-contain">
+              <div className="grid grid-cols-1 gap-5 px-5 py-5 md:grid-cols-2 md:px-8 md:py-6">
                 <label className="space-y-2">
                   <span className="text-sm font-bold text-puja-text">Product Name *</span>
                   <input
@@ -691,15 +769,17 @@ export function AdminProductsPage() {
                   />
                 </label>
               </div>
+              </div>
 
               {submitError && (
-                <div className="mx-6 mb-2 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 md:mx-8">
+                <div className="mx-5 mb-2 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 md:mx-8">
                   {submitError}
                 </div>
               )}
 
-              <div className="flex flex-col gap-3 border-t border-gray-100 px-6 py-5 md:flex-row md:items-center md:justify-end md:px-8">
+              <div className="flex shrink-0 flex-col gap-3 border-t border-gray-100 px-5 py-4 md:flex-row md:items-center md:justify-end md:px-8 safe-area-pb">
                 <button
+                  type="button"
                   onClick={() => {
                     setIsAddOpen(false);
                     resetForm();
@@ -709,11 +789,12 @@ export function AdminProductsPage() {
                   Cancel
                 </button>
                 <button
-                  onClick={handleCreateProduct}
+                  type="button"
+                  onClick={editingProductId ? handleUpdateProduct : handleCreateProduct}
                   disabled={isSubmitting}
                   className="rounded-2xl bg-[#2d4a2d] px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-[#1a2b1a] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isSubmitting ? "Saving..." : "Save Product"}
+                  {isSubmitting ? "Saving..." : editingProductId ? "Update Product" : "Save Product"}
                 </button>
               </div>
             </div>

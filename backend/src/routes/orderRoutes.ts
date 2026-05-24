@@ -1,12 +1,22 @@
 import { Router } from 'express';
-import { getOrders, updateOrderStatus, getOrderDetail, getRecentPlacedOrders } from '../controllers/orderController';
+import {
+  createOrder,
+  getMyOrders,
+  getOrders,
+  updateOrderStatus,
+  getOrderDetail,
+  getRecentPlacedOrders,
+} from '../controllers/orderController';
 import { authenticate, authorizeAdmin } from '../middleware/authMiddleware';
 
 const router = Router();
 
-// All order routes are admin protected
-router.use(authenticate, authorizeAdmin);
+// Customer routes (must be before /:id admin routes)
+router.post('/', authenticate, createOrder);
+router.get('/my-orders', authenticate, getMyOrders);
 
+// Admin routes
+router.use(authenticate, authorizeAdmin);
 router.get('/', getOrders);
 router.get('/recent', getRecentPlacedOrders);
 router.get('/:id', getOrderDetail);

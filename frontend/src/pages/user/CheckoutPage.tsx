@@ -75,9 +75,16 @@ export function CheckoutPage() {
       const response = await api.post('/orders', orderData);
       clearCart();
       navigate(`/order-success/${response.data.data.id}`);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Order failed", error);
-      alert("Failed to place order. Please try again.");
+      const msg =
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === "string"
+          ? (error as { response: { data: { message: string } } }).response.data.message
+          : "Failed to place order. Please try again.";
+      alert(msg);
     } finally {
       setIsSubmitting(false);
     }

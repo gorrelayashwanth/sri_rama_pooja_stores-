@@ -195,17 +195,22 @@ export function CollectionsPage() {
   };
 
   const browseCategorySection = (slug: string) => {
+    if (!slug) {
+      if (isSingleCategory) {
+        selectCategory("");
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setActiveSection("");
+      }
+      setIsMobileFiltersOpen(false);
+      return;
+    }
     if (isSingleCategory) {
       selectCategory(slug);
       return;
     }
-    if (!slug) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      setActiveSection("");
-      setIsMobileFiltersOpen(false);
-      return;
-    }
     scrollToCategory(slug);
+    setActiveSection(slug);
     setIsMobileFiltersOpen(false);
   };
 
@@ -342,9 +347,7 @@ export function CollectionsPage() {
                     <button
                       key={cat.id}
                       data-sidebar-slug={cat.slug}
-                      onClick={() =>
-                        isSingleCategory ? selectCategory(cat.slug) : browseCategorySection(cat.slug)
-                      }
+                      onClick={() => browseCategorySection(cat.slug)}
                       className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-left text-sm font-bold transition-all ${
                         isActive
                           ? "bg-saffron-50 border-saffron-200 text-saffron-700"

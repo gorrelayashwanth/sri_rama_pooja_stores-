@@ -21,6 +21,7 @@ import { CartPage } from "./pages/user/CartPage";
 import { LoginPage } from "./pages/user/LoginPage";
 import { RegisterPage } from "./pages/user/RegisterPage";
 import { CheckoutPage } from "./pages/user/CheckoutPage";
+import { OrderSuccessPage } from "./pages/user/OrderSuccessPage";
 import { AccountPage } from "./pages/user/AccountPage";
 import { AboutPage } from "./pages/user/AboutPage";
 import { ContactPage } from "./pages/user/ContactPage";
@@ -75,6 +76,7 @@ function AppShell() {
             <Route path="/products/:slug" element={<ProductDetailPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+            <Route path="/order-success/:orderId" element={<ProtectedRoute><OrderSuccessPage /></ProtectedRoute>} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/account/*" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
