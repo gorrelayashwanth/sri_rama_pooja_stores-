@@ -6,8 +6,11 @@ import {
   MapPin, 
   ExternalLink,
   ChevronRight,
-  MoreVertical
+  MoreVertical,
+  ChevronDown
 } from "lucide-react";
+import { useState } from "react";
+import api from "../../api/axios";
 
 export type OrderStatus = 'PLACED' | 'PREPARING' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED';
 
@@ -50,8 +53,24 @@ const statusIcons = {
   CANCELLED: Clock, // Replace with appropriate icon if needed
 };
 
-export function AdminOrderCard({ order }: AdminOrderCardProps) {
+export function AdminOrderCard({ order: initialOrder }: AdminOrderCardProps) {
+  const [order, setOrder] = useState(initialOrder);
+  const [isUpdating, setIsUpdating] = useState(false);
   const StatusIcon = statusIcons[order.status];
+
+  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newStatus = e.target.value as OrderStatus;
+    setIsUpdating(true);
+    try {
+      await api.patch(`/orders/${order.id}/status`, { status: newStatus });
+      setOrder({ ...order, status: newStatus });
+    } catch (error) {
+      console.error("Failed to update status", error);
+      alert("Failed to update order status");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   return (
     <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-all group">
@@ -59,9 +78,21 @@ export function AdminOrderCard({ order }: AdminOrderCardProps) {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ref: {order.orderNumber}</span>
-            <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold border flex items-center gap-1.5 ${statusColors[order.status]}`}>
+            <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold border flex items-center gap-1.5 relative ${statusColors[order.status]} ${isUpdating ? 'opacity-50' : ''}`}>
               <StatusIcon className="h-3 w-3" />
-              {order.status.replace(/_/g, ' ')}
+              <select 
+                value={order.status}
+                onChange={handleStatusChange}
+                disabled={isUpdating}
+                className="bg-transparent border-none outline-none appearance-none font-bold uppercase tracking-widest cursor-pointer pr-4"
+              >
+                <option value="PLACED">Placed</option>
+                <option value="PREPARING">Preparing</option>
+                <option value="OUT_FOR_DELIVERY">Out For Delivery</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+              <ChevronDown className="h-3 w-3 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
           <h3 className="font-bold text-puja-text flex items-center gap-2 group-hover:text-saffron-600 transition-colors">
