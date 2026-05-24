@@ -256,45 +256,7 @@ export function CollectionsPage() {
                 </div>
               </div>
 
-              {/* Festivals */}
-              <div>
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-saffron-600 mb-3">Festival</h4>
-                <div className="flex flex-wrap gap-2">
-                  {["Diwali", "Navratri", "Ganesh Chaturthi", "Mahashivaratri", "Janmashtami"].map(fest => (
-                    <button
-                      key={fest}
-                      onClick={() => setFilters(prev => ({ ...prev, festival: prev.festival === fest ? "" : fest }))}
-                      className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
-                        filters.festival === fest
-                          ? "bg-saffron-500 border-saffron-500 text-white shadow-lg shadow-saffron-200"
-                          : "bg-white border-gray-100 text-puja-muted hover:border-saffron-200"
-                      }`}
-                    >
-                      {fest}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
-              {/* Deities */}
-              <div>
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-saffron-600 mb-3">Deity</h4>
-                <div className="flex flex-wrap gap-2">
-                  {["Ganesha", "Lakshmi", "Shiva", "Krishna", "Hanuman", "Durga"].map(deity => (
-                    <button
-                      key={deity}
-                      onClick={() => setFilters(prev => ({ ...prev, deity: prev.deity === deity ? "" : deity }))}
-                      className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
-                        filters.deity === deity
-                          ? "bg-puja-text border-puja-text text-white"
-                          : "bg-white border-gray-100 text-puja-muted hover:border-gray-200"
-                      }`}
-                    >
-                      {deity}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               {/* Price */}
               <div>

@@ -25,7 +25,7 @@ export function AdminOrdersPage() {
       const fetchedOrders = response.data.data;
       
       // Check for new PLACED orders
-      const currentPlacedOrderIds = new Set(
+      const currentPlacedOrderIds = new Set<string>(
         fetchedOrders.filter((o: any) => o.status === 'PLACED').map((o: any) => o.id)
       );
 

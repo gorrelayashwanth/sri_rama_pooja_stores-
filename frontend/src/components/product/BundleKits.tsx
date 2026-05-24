@@ -1,5 +1,4 @@
 import { ShoppingCart, Star } from "lucide-react";
-import { Link } from "react-router-dom";
 import { useCartStore } from "../../store/cartStore";
 import { useEffect, useState } from "react";
 import api from "../../api/axios";
