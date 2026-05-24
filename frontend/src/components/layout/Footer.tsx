@@ -13,14 +13,18 @@ export function Footer() {
       const [start, end] = settings.workingHours.split('-').map(t => t.trim());
       
       const parseTime = (timeStr: string) => {
+        if (!timeStr) return new Date();
         const [time, modifier] = timeStr.split(' ');
+        if (!time || !modifier) return new Date();
         let [hours, minutes] = time.split(':').map(Number);
-        if (modifier === 'PM' && hours < 12) hours += 12;
-        if (modifier === 'AM' && hours === 12) hours = 0;
+        if (modifier.toUpperCase() === 'PM' && hours < 12) hours += 12;
+        if (modifier.toUpperCase() === 'AM' && hours === 12) hours = 0;
         const d = new Date();
-        d.setHours(hours, minutes || 0, 0);
+        d.setHours(hours || 0, minutes || 0, 0, 0);
         return d;
       };
+
+      if (!start || !end) return null;
 
       const startTime = parseTime(start);
       const endTime = parseTime(end);
