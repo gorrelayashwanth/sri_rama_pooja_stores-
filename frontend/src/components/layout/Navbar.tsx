@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, Search, Menu, User, Heart, LogOut, ShieldCheck } from "lucide-react";
+import { ShoppingCart, Search, User, Heart, LogOut, ShieldCheck } from "lucide-react";
+import { MobileNav } from "./MobileNav";
 import { useAuthStore } from "../../store/authStore";
 import { useCartStore } from "../../store/cartStore";
 import { useSettings } from "../../context/SettingsContext";
@@ -17,9 +18,7 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 w-full border-b border-saffron-100/50 bg-white/90 backdrop-blur-md">
       <div className="container mx-auto px-4 h-20 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <button className="md:hidden text-puja-text hover:text-saffron-600 transition">
-            <Menu className="h-6 w-6" />
-          </button>
+          <MobileNav />
           <Link to="/" className="flex items-center gap-3 group">
             {settings?.logo ? (
               <img src={settings.logo} alt={settings.storeName} className="h-10 w-auto object-contain transition-transform group-hover:scale-105" />

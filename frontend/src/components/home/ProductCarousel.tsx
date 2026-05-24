@@ -21,9 +21,9 @@ export function ProductCarousel({ title, subtitle, category, type }: ProductCaro
     const fetchProducts = async () => {
       try {
         const response = await api.get('/products', {
-          params: { category, type, limit: 12 }
+          params: { category, type, limit: 8 }
         });
-        setProducts(response.data.data);
+        setProducts(Array.isArray(response.data.data) ? response.data.data : []);
       } catch (error) {
         console.error("Failed to fetch carousel products", error);
       } finally {

@@ -5,7 +5,6 @@ import { ProductCarousel } from "../../components/home/ProductCarousel";
 import { useAuthStore } from "../../store/authStore";
 import { useCartStore } from "../../store/cartStore";
 import { useLanguage } from "../../context/LanguageContext";
-import { useCartStore } from "../../store/cartStore";
 import api from "../../api/axios";
 import placeholderImage from "../../assets/pooja-placeholder.svg";
 

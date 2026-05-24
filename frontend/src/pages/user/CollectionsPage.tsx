@@ -1,9 +1,10 @@
 import { ProductCard } from "../../components/product/ProductCard";
 import { SlidersHorizontal, ChevronDown, FilterX, Grid3X3, Layers } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import placeholderImage from "../../assets/pooja-placeholder.svg";
+import { getCategoryImage, sortCategoriesByCanonical, isCanonicalCategory } from "../../constants/categoryImages";
 
 interface Category {
   id: string;
@@ -24,344 +25,427 @@ interface Product {
   isPerishable?: boolean;
   isFeatured?: boolean;
   discount?: number;
-  [key: string]: any;
+  material?: string;
+  weight?: string;
+  [key: string]: unknown;
 }
 
+const INITIAL_FILTERS = {
+  category: "",
+  sort: "newest",
+  minPrice: 0,
+  maxPrice: 10000,
+  inStock: false,
+  isSouthIndian: false,
+  search: "",
+};
+
 export function CollectionsPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"grouped" | "grid">("grouped");
+  const [activeSection, setActiveSection] = useState("");
   const [filters, setFilters] = useState({
+    ...INITIAL_FILTERS,
     category: searchParams.get("category") || "",
-    sort: "newest",
-    minPrice: 0,
-    maxPrice: 10000,
-    inStock: false,
-    festival: "",
-    deity: "",
-    isSouthIndian: false,
-    search: ""
   });
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
 
-  const categoryRefs = useRef<{ [slug: string]: HTMLDivElement | null }>({});
+  const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const sidebarListRef = useRef<HTMLDivElement>(null);
+  const isSingleCategory = Boolean(filters.category);
 
-  const fetchData = async () => {
+  // Debounce filter changes (especially search & price slider)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedFilters(filters), 350);
+    return () => clearTimeout(timer);
+  }, [filters]);
+
+  // Sync URL → filter when landing from homepage category card
+  useEffect(() => {
+    const urlCat = searchParams.get("category");
+    if (urlCat && urlCat !== filters.category) {
+      setFilters((prev) => ({ ...prev, category: urlCat }));
+    }
+  }, [searchParams]);
+
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [prodRes, catRes] = await Promise.all([
         api.get("/products", {
           params: {
-            ...filters,
-            limit: 200, // get all products at once
-            category: filters.category || undefined,
-          }
+            limit: isSingleCategory ? 50 : 150,
+            sort: debouncedFilters.sort,
+            search: debouncedFilters.search || undefined,
+            minPrice: debouncedFilters.minPrice || undefined,
+            maxPrice: debouncedFilters.maxPrice < 10000 ? debouncedFilters.maxPrice : undefined,
+            inStock: debouncedFilters.inStock || undefined,
+            isSouthIndian: debouncedFilters.isSouthIndian || undefined,
+            category: debouncedFilters.category || undefined,
+          },
         }),
-        api.get("/categories")
+        api.get("/categories"),
       ]);
       const prods: Product[] = Array.isArray(prodRes.data.data) ? prodRes.data.data : [];
+      const cats: Category[] = Array.isArray(catRes.data.data) ? catRes.data.data : [];
+      const canonical = sortCategoriesByCanonical(
+        cats.filter(
+          (c) =>
+            (c._count?.products ?? 0) > 0 &&
+            isCanonicalCategory(c.slug)
+        )
+      );
       setAllProducts(prods);
-      setCategories(Array.isArray(catRes.data.data) ? catRes.data.data : []);
+      setCategories(canonical);
     } catch (error) {
       console.error("Failed to fetch collections", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedFilters, isSingleCategory]);
 
   useEffect(() => {
     fetchData();
-  }, [filters]);
+  }, [fetchData]);
 
-  // Update category filter when URL param changes
-  useEffect(() => {
-    const urlCat = searchParams.get("category");
-    if (urlCat) {
-      setFilters(prev => ({ ...prev, category: urlCat }));
+  const groupedProducts = useMemo(() => {
+    const groups: Record<string, { products: Product[]; catObj: Category | null }> = {};
+
+    if (filters.category) {
+      const cat = categories.find((c) => c.slug === filters.category);
+      const filtered = allProducts.filter((p) => p.category?.slug === filters.category);
+      groups[cat?.name || filters.category] = { products: filtered, catObj: cat || null };
+      return groups;
     }
-  }, [searchParams]);
 
-  const toggleCategory = (catSlug: string) => {
-    setFilters(prev => ({
-      ...prev,
-      category: prev.category === catSlug ? "" : catSlug
-    }));
-  };
+    for (const cat of categories) {
+      const products = allProducts.filter((p) => p.category?.slug === cat.slug);
+      if (products.length > 0) {
+        groups[cat.name] = { products, catObj: cat };
+      }
+    }
+    return groups;
+  }, [allProducts, categories, filters.category]);
+
+  const groupedEntries = useMemo(
+    () => Object.entries(groupedProducts).filter(([, g]) => g.products.length > 0),
+    [groupedProducts]
+  );
+
+  // Scroll-spy: highlight sidebar as user scrolls through category sections
+  useEffect(() => {
+    if (isSingleCategory || viewMode !== "grouped" || groupedEntries.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0));
+        const top = visible[0];
+        if (top) {
+          const slug = top.target.getAttribute("data-category-slug");
+          if (slug) setActiveSection(slug);
+        }
+      },
+      { rootMargin: "-15% 0px -55% 0px", threshold: [0.1, 0.35, 0.6] }
+    );
+
+    groupedEntries.forEach(([, { catObj }]) => {
+      const slug = catObj?.slug;
+      if (slug && categoryRefs.current[slug]) {
+        observer.observe(categoryRefs.current[slug]!);
+      }
+    });
+
+    return () => observer.disconnect();
+  }, [groupedEntries, isSingleCategory, viewMode]);
+
+  // Auto-scroll sidebar list to keep active category visible
+  useEffect(() => {
+    if (!activeSection || !sidebarListRef.current) return;
+    const btn = sidebarListRef.current.querySelector(`[data-sidebar-slug="${activeSection}"]`);
+    btn?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [activeSection]);
 
   const scrollToCategory = (slug: string) => {
     const el = categoryRefs.current[slug];
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      const top = el.getBoundingClientRect().top + window.scrollY - 100;
+      window.scrollTo({ top, behavior: "smooth" });
+      setActiveSection(slug);
     }
   };
 
-  // Group products by category
-  const groupedProducts: { [catName: string]: { products: Product[]; catObj: Category | null } } = {};
+  const selectCategory = (slug: string) => {
+    if (slug) {
+      setSearchParams({ category: slug });
+      setFilters((prev) => ({ ...prev, category: slug }));
+    } else {
+      setSearchParams({});
+      setFilters((prev) => ({ ...prev, category: "" }));
+      setActiveSection("");
+    }
+    setIsMobileFiltersOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
-  if (filters.category) {
-    // Single category mode
-    const cat = categories.find(c => c.slug === filters.category || c.id === filters.category);
-    const filtered = allProducts.filter(
-      p => p.category?.slug === filters.category || p.category?.slug === cat?.slug
-    );
-    groupedProducts[cat?.name || filters.category] = { products: filtered, catObj: cat || null };
-  } else {
-    // Group all products by category
-    allProducts.forEach(prod => {
-      const catName = prod.category?.name || "Other";
-      if (!groupedProducts[catName]) {
-        const catObj = categories.find(c => c.name === catName) || null;
-        groupedProducts[catName] = { products: [], catObj };
-      }
-      groupedProducts[catName].products.push(prod);
-    });
-  }
+  const browseCategorySection = (slug: string) => {
+    if (isSingleCategory) {
+      selectCategory(slug);
+      return;
+    }
+    if (!slug) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      setActiveSection("");
+      setIsMobileFiltersOpen(false);
+      return;
+    }
+    scrollToCategory(slug);
+    setIsMobileFiltersOpen(false);
+  };
 
   const totalCount = allProducts.length;
   const activeCategoryName = filters.category
-    ? categories.find(c => c.slug === filters.category || c.id === filters.category)?.name || filters.category
+    ? categories.find((c) => c.slug === filters.category)?.name
     : null;
 
+  const sidebarActiveSlug = filters.category || activeSection;
+
   return (
-    <div className="bg-gray-50/50 min-h-screen">
-      {/* Page Header */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="container mx-auto px-4 py-10">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+    <div className="bg-gray-50/50 min-h-screen pb-24 md:pb-10">
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-30 md:static">
+        <div className="container mx-auto px-4 py-5 md:py-10">
+          <div className="flex flex-col gap-4">
             <div className="space-y-1">
               <nav className="text-[10px] font-black uppercase tracking-[0.2em] text-saffron-600">
-                Home / {activeCategoryName ? `Collections / ${activeCategoryName}` : "All Collections"}
+                Home / {activeCategoryName ? activeCategoryName : "Shop"}
               </nav>
-              <h1 className="text-4xl md:text-5xl font-playfair font-bold text-puja-text tracking-tight">
-                {activeCategoryName ? activeCategoryName : "Divine Inventory"}
+              <h1 className="text-2xl md:text-5xl font-playfair font-bold text-puja-text tracking-tight">
+                {activeCategoryName || "Divine Inventory"}
               </h1>
-              <p className="text-sm text-puja-muted italic">
-                {loading ? "Loading sacred items..." : `${totalCount} sacred items across ${Object.keys(groupedProducts).length} categories`}
+              <p className="text-xs md:text-sm text-puja-muted italic">
+                {loading ? "Loading..." : `${totalCount} sacred items`}
               </p>
             </div>
 
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              {/* View Toggle */}
+            {/* Mobile: horizontal category chips */}
+            <div className="md:hidden -mx-4 px-4 overflow-x-auto scrollbar-hide flex gap-2 pb-1">
+              <button
+                onClick={() => selectCategory("")}
+                className={`shrink-0 px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
+                  !filters.category
+                    ? "bg-saffron-500 border-saffron-500 text-white"
+                    : "bg-white border-gray-200 text-puja-muted"
+                }`}
+              >
+                All
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => selectCategory(cat.slug)}
+                  className={`shrink-0 px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap ${
+                    filters.category === cat.slug || activeSection === cat.slug
+                      ? "bg-saffron-500 border-saffron-500 text-white"
+                      : "bg-white border-gray-200 text-puja-muted"
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsMobileFiltersOpen(!isMobileFiltersOpen)}
+                className="md:hidden flex items-center gap-2 bg-white px-4 py-3 rounded-xl border border-gray-100 text-[10px] font-black uppercase tracking-widest"
+              >
+                <SlidersHorizontal className="h-4 w-4" /> Filters
+              </button>
               <div className="hidden md:flex bg-gray-100 rounded-2xl p-1">
                 <button
                   onClick={() => setViewMode("grouped")}
-                  className={`p-2.5 rounded-xl transition-all ${viewMode === "grouped" ? "bg-white shadow text-saffron-600" : "text-gray-400"}`}
-                  title="Category View"
+                  className={`p-2.5 rounded-xl ${viewMode === "grouped" ? "bg-white shadow text-saffron-600" : "text-gray-400"}`}
                 >
                   <Layers className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={`p-2.5 rounded-xl transition-all ${viewMode === "grid" ? "bg-white shadow text-saffron-600" : "text-gray-400"}`}
-                  title="Grid View"
+                  className={`p-2.5 rounded-xl ${viewMode === "grid" ? "bg-white shadow text-saffron-600" : "text-gray-400"}`}
                 >
                   <Grid3X3 className="h-4 w-4" />
                 </button>
               </div>
-
-              {/* Mobile filter toggle */}
-              <button
-                onClick={() => setIsMobileFiltersOpen(!isMobileFiltersOpen)}
-                className="md:hidden flex-1 flex items-center justify-center gap-2 bg-white px-6 py-3.5 rounded-2xl border border-gray-100 text-xs font-black uppercase tracking-widest shadow-sm"
-              >
-                <SlidersHorizontal className="h-4 w-4" /> Filters
-              </button>
-
-              {/* Sort */}
-              <div className="relative flex-1 md:w-64">
+              <div className="relative flex-1 md:w-56">
                 <select
                   value={filters.sort}
-                  onChange={e => setFilters({ ...filters, sort: e.target.value })}
-                  className="w-full bg-white px-5 py-3.5 rounded-2xl border border-gray-100 text-xs font-black uppercase tracking-widest appearance-none cursor-pointer focus:outline-none focus:ring-4 focus:ring-saffron-50 shadow-sm transition-all"
+                  onChange={(e) => setFilters({ ...filters, sort: e.target.value })}
+                  className="w-full bg-white px-4 py-3 rounded-xl border border-gray-100 text-[10px] font-black uppercase tracking-widest appearance-none"
                 >
-                  <option value="newest">Sort: Newest</option>
-                  <option value="price-low">Price: Low → High</option>
-                  <option value="price-high">Price: High → Low</option>
-                  <option value="popular">Popularity</option>
+                  <option value="newest">Newest</option>
+                  <option value="price-low">Price ↑</option>
+                  <option value="price-high">Price ↓</option>
                 </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-puja-muted pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-puja-muted pointer-events-none" />
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-10">
-        <div className="flex flex-col md:flex-row gap-10">
-
-          {/* ── Sidebar ── */}
-          <aside className={`w-full md:w-72 shrink-0 space-y-5 ${isMobileFiltersOpen ? "block" : "hidden md:block"}`}>
-            <div className="bg-white p-7 rounded-[32px] shadow-xl shadow-gray-200/50 border border-gray-100 sticky top-24 space-y-8">
-              <div className="flex items-center justify-between">
-                <h3 className="font-playfair font-bold text-2xl text-puja-text">Refine</h3>
-                {(filters.category || filters.inStock || filters.festival || filters.deity) && (
+      <div className="container mx-auto px-4 py-6 md:py-10">
+        <div className="flex flex-col md:flex-row gap-6 md:gap-10">
+          {/* Sidebar — desktop */}
+          <aside
+            className={`w-full md:w-64 lg:w-72 shrink-0 ${isMobileFiltersOpen ? "block" : "hidden md:block"}`}
+          >
+            <div className="bg-white p-5 md:p-7 rounded-3xl shadow-lg border border-gray-100 md:sticky md:top-24 space-y-6 max-h-[70vh] md:max-h-[calc(100vh-8rem)] flex flex-col">
+              <div className="flex items-center justify-between shrink-0">
+                <h3 className="font-playfair font-bold text-xl text-puja-text">Categories</h3>
+                {filters.category && (
                   <button
-                    onClick={() => setFilters({ category: "", sort: "newest", minPrice: 0, maxPrice: 10000, inStock: false, festival: "", deity: "", isSouthIndian: false, search: "" })}
-                    className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-600 flex items-center gap-1"
+                    onClick={() => selectCategory("")}
+                    className="text-[10px] font-black uppercase text-red-500"
                   >
-                    <FilterX className="h-3 w-3" /> Clear
+                    Clear
                   </button>
                 )}
               </div>
 
-              {/* Search */}
-              <div>
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-saffron-600 mb-3">Search</h4>
+              <div
+                ref={sidebarListRef}
+                className="space-y-1.5 overflow-y-auto flex-1 -mr-1 pr-1 scrollbar-thin"
+              >
+                <button
+                  data-sidebar-slug=""
+                  onClick={() => (isSingleCategory ? selectCategory("") : browseCategorySection(""))}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-left text-sm font-bold transition-all ${
+                    !sidebarActiveSlug
+                      ? "bg-saffron-50 border-saffron-200 text-saffron-700"
+                      : "border-transparent text-puja-text hover:bg-gray-50"
+                  }`}
+                >
+                  <span>All Products</span>
+                  <span className="text-[10px] opacity-50">({totalCount})</span>
+                </button>
+                {categories.map((cat) => {
+                  const count =
+                    cat._count?.products ??
+                    allProducts.filter((p) => p.category?.slug === cat.slug).length;
+                  const isActive = sidebarActiveSlug === cat.slug;
+                  return (
+                    <button
+                      key={cat.id}
+                      data-sidebar-slug={cat.slug}
+                      onClick={() =>
+                        isSingleCategory ? selectCategory(cat.slug) : browseCategorySection(cat.slug)
+                      }
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-left text-sm font-bold transition-all ${
+                        isActive
+                          ? "bg-saffron-50 border-saffron-200 text-saffron-700"
+                          : "border-transparent text-puja-text hover:bg-gray-50"
+                      }`}
+                    >
+                      <span className="line-clamp-2 pr-2">{cat.name}</span>
+                      <span className="text-[10px] opacity-40 shrink-0">({count})</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="shrink-0 pt-4 border-t border-gray-50">
                 <input
                   type="text"
-                  placeholder="Search items..."
+                  placeholder="Search..."
                   value={filters.search}
-                  onChange={e => setFilters({ ...filters, search: e.target.value })}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-saffron-200"
+                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                  className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 text-sm"
                 />
-              </div>
-
-              {/* Categories */}
-              <div>
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-saffron-600 mb-4">Categories</h4>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => toggleCategory("")}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-all text-sm font-bold ${
-                      !filters.category
-                        ? "bg-saffron-50 border-saffron-200 text-saffron-700 translate-x-1"
-                        : "bg-gray-50/50 border-transparent text-puja-text hover:bg-white hover:border-gray-100"
-                    }`}
-                  >
-                    <span>All Products</span>
-                    <span className="text-[10px] opacity-50 font-medium">({totalCount})</span>
-                  </button>
-                  {categories.map(cat => {
-                    const catProductCount = cat._count?.products ?? allProducts.filter(p => p.category?.name === cat.name).length;
-                    return (
-                      <button
-                        key={cat.id}
-                        onClick={() => {
-                          toggleCategory(cat.slug);
-                          if (viewMode === "grouped") scrollToCategory(cat.slug);
-                        }}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-all text-sm font-bold ${
-                          filters.category === cat.slug
-                            ? "bg-saffron-50 border-saffron-200 text-saffron-700 translate-x-1"
-                            : "bg-gray-50/50 border-transparent text-puja-text hover:bg-white hover:border-gray-100"
-                        }`}
-                      >
-                        <span>{cat.name}</span>
-                        <span className="text-[10px] opacity-40 font-medium">({catProductCount})</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Price */}
-              <div>
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-saffron-600 mb-3">
-                  Max Price: ₹{filters.maxPrice.toLocaleString()}
-                </h4>
-                <input
-                  type="range"
-                  className="w-full accent-saffron-500 h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer"
-                  min="0" max="10000" step="500"
-                  value={filters.maxPrice}
-                  onChange={e => setFilters({ ...filters, maxPrice: Number(e.target.value) })}
-                />
-                <div className="flex justify-between text-[10px] font-black text-puja-muted mt-2">
-                  <span>₹0</span><span>₹10,000+</span>
-                </div>
-              </div>
-
-              {/* Toggles */}
-              <div className="pt-4 border-t border-gray-50 space-y-3">
-                <label className="flex items-center justify-between cursor-pointer">
-                  <span className="text-xs font-bold text-puja-text">🌿 Fresh / Perishable</span>
-                  <input type="checkbox" checked={filters.inStock} onChange={e => setFilters({ ...filters, inStock: e.target.checked })} className="w-5 h-5 rounded-lg border-gray-200 text-saffron-500 cursor-pointer" />
-                </label>
-                <label className="flex items-center justify-between cursor-pointer">
-                  <span className="text-xs font-bold text-puja-text">In Stock Only</span>
-                  <input type="checkbox" checked={filters.isSouthIndian} onChange={e => setFilters({ ...filters, isSouthIndian: e.target.checked })} className="w-5 h-5 rounded-lg border-gray-200 text-saffron-500 cursor-pointer" />
-                </label>
               </div>
             </div>
           </aside>
 
-          {/* ── Main Content ── */}
+          {/* Products */}
           <div className="flex-1 min-w-0">
             {loading ? (
-              <div className="space-y-16">
-                {[1, 2, 3].map(i => (
-                  <div key={i}>
-                    <div className="h-8 bg-gray-200 rounded-full w-56 mb-6 animate-pulse" />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {[1, 2, 3].map(j => (
-                        <div key={j} className="aspect-[3/4] bg-gray-100 rounded-[32px] animate-pulse" />
-                      ))}
-                    </div>
-                  </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="aspect-[3/4] bg-gray-100 rounded-2xl animate-pulse" />
                 ))}
               </div>
             ) : totalCount === 0 ? (
-              <div className="bg-white rounded-[40px] p-20 text-center border-2 border-dashed border-gray-100">
-                <FilterX className="h-16 w-16 text-gray-200 mx-auto mb-6" />
-                <h3 className="text-2xl font-playfair font-bold text-puja-text mb-2">No items found</h3>
-                <p className="text-puja-muted mb-8 italic">Try adjusting your filters.</p>
+              <div className="bg-white rounded-3xl p-12 text-center border border-dashed border-gray-200">
+                <FilterX className="h-12 w-12 text-gray-200 mx-auto mb-4" />
+                <h3 className="text-xl font-playfair font-bold mb-4">No items found</h3>
                 <button
-                  onClick={() => setFilters({ category: "", sort: "newest", minPrice: 0, maxPrice: 10000, inStock: false, festival: "", deity: "", isSouthIndian: false, search: "" })}
-                  className="bg-saffron-500 text-white px-10 py-4 rounded-2xl font-bold hover:bg-saffron-600 transition-all shadow-lg shadow-saffron-100"
+                  onClick={() => {
+                    setFilters({ ...INITIAL_FILTERS, category: "" });
+                    navigate("/collections");
+                  }}
+                  className="bg-saffron-500 text-white px-8 py-3 rounded-xl font-bold"
                 >
-                  Reset All Filters
+                  Reset
                 </button>
               </div>
-            ) : viewMode === "grid" ? (
-              // ── Flat Grid Mode ──
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {allProducts.map(product => (
-                  <ProductCard key={product.id} product={product as any} />
-                ))}
+            ) : viewMode === "grid" || isSingleCategory ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
+                {(isSingleCategory ? groupedEntries[0]?.[1].products ?? allProducts : allProducts).map(
+                  (product) => (
+                    <ProductCard key={product.id} product={product as any} />
+                  )
+                )}
               </div>
             ) : (
-              // ── Grouped by Category Mode ──
-              <div className="space-y-20">
-                {Object.entries(groupedProducts).map(([catName, { products, catObj }]) => {
-                  if (products.length === 0) return null;
-                  const catImage = catObj?.image;
+              <div className="space-y-12 md:space-y-20">
+                {groupedEntries.map(([catName, { products, catObj }]) => {
+                  const slug = catObj?.slug || catName;
                   return (
-                    <div
+                    <section
                       key={catName}
-                      ref={el => { categoryRefs.current[catObj?.slug || catName] = el; }}
+                      ref={(el) => {
+                        categoryRefs.current[slug] = el as HTMLDivElement | null;
+                      }}
+                      data-category-slug={slug}
+                      className="scroll-mt-28"
                     >
-                      {/* Category Header */}
-                      <div className="flex items-center gap-5 mb-8">
-                        {catImage && (
-                          <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-saffron-100 shadow-lg shrink-0">
-                            <img
-                              src={catImage}
-                              alt={catName}
-                              className="w-full h-full object-cover"
-                              onError={e => { (e.target as HTMLImageElement).src = placeholderImage; }}
-                            />
-                          </div>
-                        )}
-                        <div className="flex-1 flex items-center gap-4">
-                          <div>
-                            <span className="text-[10px] font-black uppercase tracking-[0.35em] text-saffron-600 block mb-1">
-                              {products.length} Items
-                            </span>
-                            <h2 className="text-2xl md:text-3xl font-playfair font-bold text-puja-text">{catName}</h2>
-                          </div>
-                          <div className="flex-1 h-px bg-gradient-to-r from-saffron-200 to-transparent ml-4 hidden md:block" />
+                      <div className="flex items-center gap-4 mb-5 md:mb-8">
+                        <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl overflow-hidden border-2 border-saffron-100 shrink-0">
+                          <img
+                            src={getCategoryImage(slug, catObj?.image)}
+                            alt=""
+                            loading="lazy"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = placeholderImage;
+                            }}
+                          />
                         </div>
+                        <div>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-saffron-600">
+                            {products.length} items
+                          </span>
+                          <h2 className="text-xl md:text-3xl font-playfair font-bold text-puja-text">
+                            {catName}
+                          </h2>
+                        </div>
+                        <button
+                          onClick={() => selectCategory(slug)}
+                          className="ml-auto text-[10px] font-black uppercase tracking-widest text-saffron-600 hover:underline shrink-0"
+                        >
+                          View all →
+                        </button>
                       </div>
-
-                      {/* Products Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {products.map(product => (
+                      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
+                        {products.map((product) => (
                           <ProductCard key={product.id} product={product as any} />
                         ))}
                       </div>
-                    </div>
+                    </section>
                   );
                 })}
               </div>

@@ -13,7 +13,14 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
   const { t } = useLanguage();
-  const hasDiscount = product.discount && product.discount > 0;
+  const hasDiscount = Boolean(product.discount && product.discount > 0);
+  const displayPrice =
+    product.salePrice != null && product.salePrice > 0
+      ? product.salePrice
+      : product.price;
+  const showMeta = Boolean(
+    product.material?.trim() || (product.weight && String(product.weight) !== "0")
+  );
   const [imgSrc, setImgSrc] = React.useState(
     (product as { image?: string }).image ||
       product.images?.[0]?.url ||
@@ -47,6 +54,8 @@ export function ProductCard({ product }: ProductCardProps) {
           <img 
             src={imgSrc} 
             alt={t(product.name, (product as any).translations, 'name')}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             onError={() => setImgSrc(placeholderImage)}
           />
@@ -89,7 +98,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <p className="text-[10px] text-saffron-600 font-black uppercase tracking-[0.2em]">
             {product.category?.name || "General"}
           </p>
-          {(product.material || product.weight) && (
+          {showMeta && (
             <span className="text-[9px] text-puja-muted font-bold uppercase tracking-tighter bg-gray-50 px-2 py-0.5 rounded">
               {product.material || product.weight}
             </span>
@@ -106,7 +115,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <span className="text-xl font-black text-puja-text">
-                ₹{product.salePrice || product.price}
+                ₹{displayPrice.toLocaleString('en-IN')}
               </span>
               {hasDiscount && (
                 <span className="text-xs text-puja-muted line-through font-medium">

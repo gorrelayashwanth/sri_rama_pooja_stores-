@@ -11,7 +11,22 @@ import liquidsImg from '../assets/home/puja-items.png';
 import booksImg from '../assets/home/pooja-essentials-alt.png';
 import decorImg from '../assets/home/idols-and-frames.png';
 
-/** Maps category slugs from the database to local asset images */
+/** Canonical display order for the 12 store categories */
+export const CANONICAL_CATEGORY_SLUGS = [
+  'incense-fragrance',
+  'diyas-lamps',
+  'god-idols-murtis',
+  'puja-thali-utensils',
+  'sacred-powders',
+  'flowers-garlands',
+  'sacred-threads-malas',
+  'puja-fabrics',
+  'puja-kits',
+  'sacred-water-liquids',
+  'books-spiritual-items',
+  'temple-mandir-decoration',
+] as const;
+
 export const CATEGORY_IMAGE_MAP: Record<string, string> = {
   'incense-fragrance': incenseImg,
   'diyas-lamps': diyasImg,
@@ -25,20 +40,23 @@ export const CATEGORY_IMAGE_MAP: Record<string, string> = {
   'sacred-water-liquids': liquidsImg,
   'books-spiritual-items': booksImg,
   'temple-mandir-decoration': decorImg,
-  // Legacy slugs from earlier seeds
-  'incense-dhoop': incenseImg,
-  'incense-oils': incenseImg,
-  'sacred-idols-murtis': idolsImg,
-  'idols-frames': idolsImg,
-  'puja-items': powdersImg,
-  'pooja-essentials': powdersImg,
-  'kumkum-vibhuti-sacred-powders': powdersImg,
-  'fresh-florals-leaves': flowersImg,
-  'sacred-threads-raksha': threadsImg,
-  'festival-supplies': kitsImg,
-  'brassware': diyasImg,
 };
 
+/** Prefer bundled assets (always work on Vercel); fall back to absolute URLs only */
 export function getCategoryImage(slug: string, dbImage?: string | null): string {
-  return dbImage || CATEGORY_IMAGE_MAP[slug] || incenseImg;
+  if (CATEGORY_IMAGE_MAP[slug]) return CATEGORY_IMAGE_MAP[slug];
+  if (dbImage?.startsWith('http')) return dbImage;
+  return incenseImg;
+}
+
+export function isCanonicalCategory(slug: string): boolean {
+  return (CANONICAL_CATEGORY_SLUGS as readonly string[]).includes(slug);
+}
+
+export function sortCategoriesByCanonical<T extends { slug: string }>(list: T[]): T[] {
+  const order: Record<string, number> = {};
+  CANONICAL_CATEGORY_SLUGS.forEach((s, i) => {
+    order[s] = i;
+  });
+  return [...list].sort((a, b) => (order[a.slug] ?? 99) - (order[b.slug] ?? 99));
 }
