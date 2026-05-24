@@ -365,7 +365,7 @@ export function AdminProductsPage() {
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
                             <img 
-                              src={product.images[0]?.url || placeholderImage} 
+                              src={product.images?.[0]?.url || placeholderImage} 
                               alt={product.name} 
                               className="w-full h-full object-cover"
                             />

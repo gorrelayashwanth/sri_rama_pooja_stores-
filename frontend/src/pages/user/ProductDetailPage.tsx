@@ -46,7 +46,7 @@ export function ProductDetailPage() {
       name: product.name,
       price: product.price,
       salePrice: product.salePrice,
-      image: product.images[0]?.url || placeholderImage,
+      image: product.images?.[0]?.url || placeholderImage,
       quantity: quantity
     });
   };

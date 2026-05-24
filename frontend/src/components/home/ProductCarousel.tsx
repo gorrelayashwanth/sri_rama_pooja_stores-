@@ -97,7 +97,7 @@ export function ProductCarousel({ title, subtitle, category, type }: ProductCaro
             <div key={product.id} className="min-w-[280px] md:min-w-[340px] snap-start">
               <ProductCard product={{
                 ...product,
-                image: product.images[0]?.url || placeholderImage,
+                image: product.images?.[0]?.url || placeholderImage,
                 category: product.category?.name || "Sacred Item"
               }} />
             </div>
