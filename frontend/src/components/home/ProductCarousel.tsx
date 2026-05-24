@@ -21,7 +21,7 @@ export function ProductCarousel({ title, subtitle, category, type }: ProductCaro
     const fetchProducts = async () => {
       try {
         const response = await api.get('/products', {
-          params: { category, type, limit: 10 }
+          params: { category, type, limit: 12 }
         });
         setProducts(response.data.data);
       } catch (error) {

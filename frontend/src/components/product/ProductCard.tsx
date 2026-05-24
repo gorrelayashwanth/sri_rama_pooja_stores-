@@ -1,8 +1,10 @@
+import React from "react";
 import { ShoppingCart, Heart, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCartStore } from "../../store/cartStore";
 import type { Product } from "../../types";
 import { useLanguage } from "../../context/LanguageContext";
+import placeholderImage from "../../assets/pooja-placeholder.svg";
 
 interface ProductCardProps {
   product: Product;
@@ -12,26 +14,44 @@ export function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
   const { t } = useLanguage();
   const hasDiscount = product.discount && product.discount > 0;
-  const productImage = product.images?.[0]?.url || "/placeholder-product.png";
+  const [imgSrc, setImgSrc] = React.useState(
+    (product as { image?: string }).image ||
+      product.images?.[0]?.url ||
+      placeholderImage
+  );
+
+  React.useEffect(() => {
+    setImgSrc(
+      (product as { image?: string }).image ||
+        product.images?.[0]?.url ||
+        placeholderImage
+    );
+  }, [product]);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    addItem({ ...product, image: productImage, quantity: 1 } as any);
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      salePrice: product.salePrice,
+      image: imgSrc,
+      quantity: 1,
+    });
   };
 
   return (
     <div className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col h-full border border-gray-100/50">
-      {/* Image Container */}
       <div className="relative aspect-square overflow-hidden bg-[#fdfaf7]">
         <Link to={`/products/${product.slug}`}>
           <img 
-            src={productImage} 
+            src={imgSrc} 
             alt={t(product.name, (product as any).translations, 'name')}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            onError={() => setImgSrc(placeholderImage)}
           />
         </Link>
         
-        {/* Badges */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
           {hasDiscount && (
             <div className="bg-red-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg shadow-red-500/30">
@@ -50,14 +70,12 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
 
-        {/* Action Buttons */}
         <div className="absolute top-4 right-4 flex flex-col gap-2 transform translate-x-12 group-hover:translate-x-0 transition-transform duration-500">
           <button className="bg-white/95 backdrop-blur-sm p-3 rounded-2xl text-puja-text hover:bg-saffron-500 hover:text-white shadow-xl shadow-black/5 transition-all active:scale-90">
             <Heart className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Quick Add to Cart - Desktop */}
         <button 
           onClick={handleAddToCart}
           className="absolute bottom-4 left-4 right-4 bg-[#2d4a2d] text-white py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] transform translate-y-24 group-hover:translate-y-0 transition-all duration-500 flex items-center justify-center gap-2 shadow-2xl shadow-green-950/20 hover:bg-black"
@@ -66,7 +84,6 @@ export function ProductCard({ product }: ProductCardProps) {
         </button>
       </div>
 
-      {/* Content */}
       <div className="p-6 flex flex-col flex-grow">
         <div className="flex items-center justify-between mb-2">
           <p className="text-[10px] text-saffron-600 font-black uppercase tracking-[0.2em]">

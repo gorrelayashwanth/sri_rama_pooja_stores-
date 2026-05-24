@@ -55,6 +55,16 @@ export const getProducts = async (req: Request, res: Response, next: NextFunctio
       where.isFeatured = true;
     }
 
+    if (req.query.type === 'bestselling') {
+      where.isFeatured = true;
+    }
+
+    let orderBy: { createdAt?: 'desc' | 'asc'; price?: 'desc' | 'asc' } = { createdAt: 'desc' };
+    const sort = String(req.query.sort || '');
+    if (sort === 'price-low') orderBy = { price: 'asc' };
+    else if (sort === 'price-high') orderBy = { price: 'desc' };
+    else if (req.query.type === 'newest' || sort === 'newest') orderBy = { createdAt: 'desc' };
+
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where,
@@ -64,7 +74,7 @@ export const getProducts = async (req: Request, res: Response, next: NextFunctio
         },
         skip,
         take: Number(limit),
-        orderBy: { createdAt: 'desc' }
+        orderBy
       }),
       prisma.product.count({ where })
     ]);

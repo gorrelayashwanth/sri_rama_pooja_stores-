@@ -5,6 +5,7 @@ import { ProductCarousel } from "../../components/home/ProductCarousel";
 import { useAuthStore } from "../../store/authStore";
 import { useCartStore } from "../../store/cartStore";
 import { useLanguage } from "../../context/LanguageContext";
+import { useCartStore } from "../../store/cartStore";
 import api from "../../api/axios";
 import placeholderImage from "../../assets/pooja-placeholder.svg";
 
@@ -20,7 +21,7 @@ export function ProductDetailPage() {
   const [reviewSuccess, setReviewSuccess] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const [activeImageIdx, setActiveImageIdx] = useState(0);
-  const addItem = useCartStore((state) => state.addItem);
+  const addItem = useCartStore((state: any) => state.addItem);
   const { t } = useLanguage();
 
   const fetchProduct = async () => {

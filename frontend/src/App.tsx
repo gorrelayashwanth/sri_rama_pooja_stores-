@@ -16,8 +16,6 @@ import { BundleKits } from "./components/product/BundleKits";
 import { StoreInfo } from "./components/home/StoreInfo";
 import { LanguageProvider } from "./context/LanguageContext";
 import { CollectionsPage } from "./pages/user/CollectionsPage";
-import { FestivalsPage } from "./pages/user/FestivalsPage";
-import { DeitiesPage } from "./pages/user/DeitiesPage";
 import { ProductDetailPage } from "./pages/user/ProductDetailPage";
 import { CartPage } from "./pages/user/CartPage";
 import { LoginPage } from "./pages/user/LoginPage";
@@ -74,8 +72,6 @@ function AppShell() {
             <Route path="/" element={<HomePage />} />
             <Route path="/collections" element={<CollectionsPage />} />
             <Route path="/collections/:category" element={<CollectionsPage />} />
-            <Route path="/festivals" element={<FestivalsPage />} />
-            <Route path="/deities" element={<DeitiesPage />} />
             <Route path="/products/:slug" element={<ProductDetailPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />

@@ -256,8 +256,6 @@ export function CollectionsPage() {
                 </div>
               </div>
 
-
-
               {/* Price */}
               <div>
                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-saffron-600 mb-3">

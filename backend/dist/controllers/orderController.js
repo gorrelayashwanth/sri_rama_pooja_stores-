@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getOrderDetail = exports.updateOrderStatus = exports.getOrders = void 0;
+exports.getRecentPlacedOrders = exports.getOrderDetail = exports.updateOrderStatus = exports.getOrders = void 0;
 const prisma_1 = __importDefault(require("../utils/prisma"));
 const getSingleParam = (value) => Array.isArray(value) ? value[0] : value;
 const getOrders = async (req, res, next) => {
@@ -107,3 +107,25 @@ const getOrderDetail = async (req, res, next) => {
     }
 };
 exports.getOrderDetail = getOrderDetail;
+const getRecentPlacedOrders = async (req, res, next) => {
+    try {
+        const { since } = req.query;
+        const where = { status: 'PLACED' };
+        if (since) {
+            const parsedSince = new Date(String(since));
+            if (!isNaN(parsedSince.getTime())) {
+                where.createdAt = { gt: parsedSince };
+            }
+        }
+        const orders = await prisma_1.default.order.findMany({
+            where,
+            select: { id: true, orderNumber: true, createdAt: true, totalAmount: true },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.status(200).json({ success: true, data: orders });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.getRecentPlacedOrders = getRecentPlacedOrders;

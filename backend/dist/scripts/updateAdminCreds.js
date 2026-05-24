@@ -7,21 +7,31 @@ const client_1 = require("@prisma/client");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const prisma = new client_1.PrismaClient();
 async function updateAdmin() {
-    const newEmail = 'sriramapoojastores@gmail.com';
-    const newPassword = 'srirama@admin';
+    const newEmail = 'sriramapoojastores@admin.com';
+    const newPassword = 'admin123';
     const passwordHash = await bcryptjs_1.default.hash(newPassword, 12);
     console.log(`Updating/Creating admin user: ${newEmail}`);
+    // Remove legacy admin accounts with old emails
+    const legacyEmails = [
+        'sriramapoojastores@gmail.com',
+        'admin@sriramapooja.com',
+    ];
+    for (const email of legacyEmails) {
+        await prisma.user.deleteMany({ where: { email } }).catch(() => { });
+    }
     const user = await prisma.user.upsert({
         where: { email: newEmail },
         update: {
             passwordHash,
-            role: 'ADMIN',
+            role: 'CHIEF_ADMIN',
+            emailVerified: true,
         },
         create: {
             name: 'Sri Rama Pooja Stores Admin',
             email: newEmail,
             passwordHash,
-            role: 'ADMIN',
+            role: 'CHIEF_ADMIN',
+            emailVerified: true,
         },
     });
     console.log('--- ADMIN UPDATED SUCCESSFULLY ---');

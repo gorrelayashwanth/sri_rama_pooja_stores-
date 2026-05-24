@@ -7,22 +7,20 @@ async function main() {
   console.log('Starting full database seed with 88 products...');
 
   // --- 1. ADMIN USER ---
-  const adminEmail = 'sriramapoojastores@gmail.com';
-  const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
-
-  if (!existingAdmin) {
-    const passwordHash = await bcrypt.hash('srirama@admin', 10);
-    await prisma.user.create({
-      data: {
-        name: 'Admin',
-        email: adminEmail,
-        passwordHash,
-        role: 'CHIEF_ADMIN',
-        emailVerified: true
-      },
-    });
-    console.log('Admin user created/verified.');
-  }
+  const adminEmail = 'sriramapoojastores@admin.com';
+  const passwordHash = await bcrypt.hash('admin123', 10);
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: { passwordHash, role: 'CHIEF_ADMIN', emailVerified: true },
+    create: {
+      name: 'Sri Rama Pooja Stores Admin',
+      email: adminEmail,
+      passwordHash,
+      role: 'CHIEF_ADMIN',
+      emailVerified: true,
+    },
+  });
+  console.log('Admin user created/verified.');
 
   // --- 2. CATEGORIES ---
   const categoriesData = [
@@ -1474,8 +1472,8 @@ async function main() {
         imagePrompt: p.imagePrompt,
         images: {
           create: {
-            url: "https://via.placeholder.com/400x400?text=" + encodeURIComponent(p.name),
-            publicId: "placeholder_" + p.sku
+            url: `/images/products/${p.sku}.png`,
+            publicId: "local_" + p.sku
           }
         }
       },

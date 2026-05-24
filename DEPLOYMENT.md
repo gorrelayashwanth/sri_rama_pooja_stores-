@@ -19,9 +19,10 @@ Files added for SPA routing:
 - `frontend/vercel.json`
 - `frontend/public/_redirects`
 
-Environment variable needed:
+Environment variable (optional on Vercel monorepo):
 
 - `VITE_API_URL=https://your-backend-domain/api/v1`
+- If unset in production, the frontend defaults to `/_/backend/api/v1` (same-origin Vercel backend route).
 
 ## Backend Deployment
 

@@ -45,14 +45,6 @@ export function Navbar() {
             Shop
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-saffron-500 transition-all group-hover:w-full" />
           </Link>
-          <Link to="/festivals" className="text-puja-text hover:text-saffron-600 text-[11px] font-black uppercase tracking-[0.2em] transition-all relative group">
-            Festivals
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-saffron-500 transition-all group-hover:w-full" />
-          </Link>
-          <Link to="/deities" className="text-puja-text hover:text-saffron-600 text-[11px] font-black uppercase tracking-[0.2em] transition-all relative group">
-            Deities
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-saffron-500 transition-all group-hover:w-full" />
-          </Link>
           <Link to="/about" className="text-puja-text hover:text-saffron-600 text-[11px] font-black uppercase tracking-[0.2em] transition-all relative group">
             About
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-saffron-500 transition-all group-hover:w-full" />

@@ -44,6 +44,17 @@ const getProducts = async (req, res, next) => {
         if (req.query.isFeatured === 'true') {
             where.isFeatured = true;
         }
+        if (req.query.type === 'bestselling') {
+            where.isFeatured = true;
+        }
+        let orderBy = { createdAt: 'desc' };
+        const sort = String(req.query.sort || '');
+        if (sort === 'price-low')
+            orderBy = { price: 'asc' };
+        else if (sort === 'price-high')
+            orderBy = { price: 'desc' };
+        else if (req.query.type === 'newest' || sort === 'newest')
+            orderBy = { createdAt: 'desc' };
         const [products, total] = await Promise.all([
             prisma_1.default.product.findMany({
                 where,
@@ -53,7 +64,7 @@ const getProducts = async (req, res, next) => {
                 },
                 skip,
                 take: Number(limit),
-                orderBy: { createdAt: 'desc' }
+                orderBy
             }),
             prisma_1.default.product.count({ where })
         ]);

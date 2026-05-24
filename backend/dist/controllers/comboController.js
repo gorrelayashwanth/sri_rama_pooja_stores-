@@ -11,7 +11,10 @@ const getCombos = async (req, res, next) => {
         const combos = await prisma_1.default.combo.findMany({
             include: {
                 products: {
-                    select: { id: true, name: true, price: true }
+                    include: {
+                        images: true,
+                        category: { select: { name: true } }
+                    }
                 }
             }
         });
