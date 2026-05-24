@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getOrders, updateOrderStatus, getOrderDetail } from '../controllers/orderController';
+import { getOrders, updateOrderStatus, getOrderDetail, getRecentPlacedOrders } from '../controllers/orderController';
 import { authenticate, authorizeAdmin } from '../middleware/authMiddleware';
 
 const router = Router();
@@ -8,6 +8,7 @@ const router = Router();
 router.use(authenticate, authorizeAdmin);
 
 router.get('/', getOrders);
+router.get('/recent', getRecentPlacedOrders);
 router.get('/:id', getOrderDetail);
 router.patch('/:id/status', updateOrderStatus);
 

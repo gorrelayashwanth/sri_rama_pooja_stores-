@@ -154,6 +154,11 @@ export function ProductDetailPage() {
               <div className={`px-4 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest ${product.isAvailable ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
                 {product.isAvailable ? "Divine Presence (In Stock)" : "Currently Ascended (Out of Stock)"}
               </div>
+              {product.isPerishable && (
+                <div className="bg-emerald-500 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg shadow-emerald-500/30">
+                  🌿 Fresh Stock - Sourced Daily
+                </div>
+              )}
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-playfair font-bold text-puja-text leading-[1.1] mb-6">
@@ -412,6 +417,12 @@ export function ProductDetailPage() {
                         <span className="text-sm font-bold text-puja-muted">Min Order Qty</span>
                         <span className="text-sm font-black text-puja-text">{product.minOrderQty || 1}</span>
                       </div>
+                      {product.attributes && typeof product.attributes === 'object' && Object.entries(product.attributes).map(([key, value]) => (
+                        <div key={key} className="flex justify-between py-2 border-b border-gray-200/50">
+                          <span className="text-sm font-bold text-puja-muted capitalize">{key.replace(/_/g, ' ')}</span>
+                          <span className="text-sm font-black text-puja-text">{String(value)}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
 

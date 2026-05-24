@@ -106,3 +106,24 @@ export const getOrderDetail = async (req: Request, res: Response, next: NextFunc
     next(error);
   }
 };
+
+export const getRecentPlacedOrders = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { since } = req.query;
+    const where: any = { status: 'PLACED' };
+    if (since) {
+      const parsedSince = new Date(String(since));
+      if (!isNaN(parsedSince.getTime())) {
+        where.createdAt = { gt: parsedSince };
+      }
+    }
+    const orders = await prisma.order.findMany({
+      where,
+      select: { id: true, orderNumber: true, createdAt: true, totalAmount: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.status(200).json({ success: true, data: orders });
+  } catch (error) {
+    next(error);
+  }
+};

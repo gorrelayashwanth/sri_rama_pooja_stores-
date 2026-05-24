@@ -43,6 +43,11 @@ export function ProductCard({ product }: ProductCardProps) {
               <Star className="h-3 w-3 fill-current" /> Featured
             </div>
           )}
+          {(product as any).isPerishable && (
+            <div className="bg-emerald-500 text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg shadow-emerald-500/30 whitespace-nowrap">
+              🌿 Fresh Stock
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}

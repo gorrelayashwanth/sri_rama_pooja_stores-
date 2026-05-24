@@ -11,6 +11,8 @@ export function AdminOrdersPage() {
   const statusFilter = "All Orders";
   const searchTerm = "";
 
+  const [previousPlacedOrderIds, setPreviousPlacedOrderIds] = useState<Set<string>>(new Set());
+
   const fetchOrders = async () => {
     setLoading(true);
     try {
@@ -20,7 +22,31 @@ export function AdminOrdersPage() {
           search: searchTerm
         }
       });
-      setOrders(response.data.data);
+      const fetchedOrders = response.data.data;
+      
+      // Check for new PLACED orders
+      const currentPlacedOrderIds = new Set(
+        fetchedOrders.filter((o: any) => o.status === 'PLACED').map((o: any) => o.id)
+      );
+
+      // If we already had some placed orders loaded before (not first load), and we found new ones
+      if (previousPlacedOrderIds.size > 0) {
+        let hasNewOrder = false;
+        currentPlacedOrderIds.forEach(id => {
+          if (!previousPlacedOrderIds.has(id)) {
+            hasNewOrder = true;
+          }
+        });
+
+        if (hasNewOrder) {
+          // Play chime
+          const audio = new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=success-1-6297.mp3');
+          audio.play().catch(e => console.error("Audio play blocked by browser:", e));
+        }
+      }
+
+      setPreviousPlacedOrderIds(currentPlacedOrderIds);
+      setOrders(fetchedOrders);
     } catch (error) {
       console.error("Failed to fetch orders:", error);
     } finally {
@@ -32,7 +58,7 @@ export function AdminOrdersPage() {
     fetchOrders();
     const intervalId = window.setInterval(() => {
       fetchOrders();
-    }, 15000);
+    }, 10000); // Poll every 10s for hyper-local Quick Commerce
 
     return () => {
       window.clearInterval(intervalId);

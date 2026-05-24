@@ -93,7 +93,7 @@ export function ProductCarousel({ title, subtitle, category, type }: ProductCaro
           className="flex gap-8 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-10 -mx-4 px-4 mask-edge-fade"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {products.map((product) => (
+          {Array.isArray(products) && products.length > 0 ? products.map((product) => (
             <div key={product.id} className="min-w-[280px] md:min-w-[340px] snap-start">
               <ProductCard product={{
                 ...product,
@@ -101,7 +101,7 @@ export function ProductCarousel({ title, subtitle, category, type }: ProductCaro
                 category: product.category?.name || "Sacred Item"
               }} />
             </div>
-          ))}
+          )) : null}
         </div>
       </div>
     </section>

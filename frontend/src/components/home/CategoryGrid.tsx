@@ -37,7 +37,7 @@ export function CategoryGrid() {
             [1,2,3].map(i => (
               <div key={i} className="h-[400px] rounded-[2.5rem] bg-gray-50 animate-pulse border border-gray-100" />
             ))
-          ) : categories.map((category) => (
+          ) : Array.isArray(categories) && categories.length > 0 ? categories.map((category) => (
             <Link 
               key={category.id}
               to={`/collections?category=${category.id}`}
@@ -62,7 +62,7 @@ export function CategoryGrid() {
                 <div className="w-16 h-1.5 bg-saffron-500 mt-6 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500 rounded-full" />
               </div>
             </Link>
-          ))}
+          )) : null}
         </div>
       </div>
     </section>

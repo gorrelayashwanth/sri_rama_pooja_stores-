@@ -9,7 +9,7 @@ import {
   MoreVertical
 } from "lucide-react";
 
-export type OrderStatus = 'PENDING' | 'PACKING' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED';
+export type OrderStatus = 'PLACED' | 'PREPARING' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED';
 
 interface AdminOrderCardProps {
   order: {
@@ -35,16 +35,16 @@ interface AdminOrderCardProps {
 }
 
 const statusColors = {
-  PENDING: 'bg-orange-100 text-orange-600 border-orange-200',
-  PACKING: 'bg-blue-100 text-blue-600 border-blue-200',
+  PLACED: 'bg-orange-100 text-orange-600 border-orange-200',
+  PREPARING: 'bg-blue-100 text-blue-600 border-blue-200',
   OUT_FOR_DELIVERY: 'bg-purple-100 text-purple-600 border-purple-200',
   DELIVERED: 'bg-green-100 text-green-600 border-green-200',
   CANCELLED: 'bg-red-100 text-red-600 border-red-200',
 };
 
 const statusIcons = {
-  PENDING: Clock,
-  PACKING: Package,
+  PLACED: Clock,
+  PREPARING: Package,
   OUT_FOR_DELIVERY: Truck,
   DELIVERED: CheckCircle2,
   CANCELLED: Clock, // Replace with appropriate icon if needed

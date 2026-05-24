@@ -89,6 +89,9 @@ model Product {
   minOrderQty   Int            @default(1)
   material      String?
   weight        String?
+  weightGrams   Int?
+  isPerishable  Boolean        @default(false)
+  attributes    Json?
   dimensions    String?
   tags          String[]       @default([])
   festival      String[]       @default([])
@@ -188,7 +191,7 @@ model Order {
   awbNumber         String?       @unique
   userId            String
   addressId         String
-  status            OrderStatus   @default(PENDING)
+  status            OrderStatus   @default(PLACED)
   totalAmount       Float
   discountAmount    Float         @default(0)
   shippingFee       Float         @default(0)
@@ -269,8 +272,8 @@ enum Role {
 }
 
 enum OrderStatus {
-  PENDING
-  PACKING
+  PLACED
+  PREPARING
   OUT_FOR_DELIVERY
   DELIVERED
   CANCELLED
