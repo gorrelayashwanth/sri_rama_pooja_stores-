@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { AdminHeader } from "../../components/admin/AdminHeader";
 import { AdminLayout } from "../../components/admin/AdminLayout";
 import api from "../../api/axios";
-import { supabase } from "../../config/supabaseClient";
 
 interface Review {
   id: string;
@@ -46,14 +45,11 @@ export function AdminReviewsPage() {
   useEffect(() => {
     fetchReviews();
 
-    const channel = supabase
-      .channel('reviews-sync')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'reviews' }, () => {
-        fetchReviews();
-      })
-      .subscribe();
+    const interval = setInterval(() => {
+      fetchReviews();
+    }, 15000);
 
-    return () => { supabase.removeChannel(channel); };
+    return () => clearInterval(interval);
   }, []);
 
   const handleDelete = async (id: string) => {

@@ -83,6 +83,21 @@ export function CheckoutPage() {
     }
   };
 
+  if (!user) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
+        <div className="bg-saffron-50 p-10 rounded-full mb-8 shadow-inner">
+          <Lock className="h-16 w-16 text-saffron-500" />
+        </div>
+        <h2 className="text-4xl font-playfair font-black text-puja-text mb-4 tracking-tight">Sacred Sign-in Required</h2>
+        <p className="text-puja-muted mb-10 max-w-md mx-auto">Please create an account or sign in to save your details securely and place an order.</p>
+        <Link to="/login" className="bg-[#2d4a2d] text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all shadow-xl shadow-green-100">
+          Login / Register
+        </Link>
+      </div>
+    );
+  }
+
   if (items.length === 0) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">

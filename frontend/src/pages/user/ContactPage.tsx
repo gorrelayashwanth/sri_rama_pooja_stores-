@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../../store/authStore";
 import api from "../../api/axios";
-import { supabase } from "../../config/supabaseClient";
 import { Send, User, MessageCircle, Clock, Mail } from "lucide-react";
 
 interface Message {
@@ -43,14 +42,12 @@ export function ContactPage() {
     fetchMyMessages();
 
     if (isAuthenticated) {
-      const channel = supabase
-        .channel('user-messages')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
-          fetchMyMessages();
-        })
-        .subscribe();
+      // Poll every 10 seconds for new replies
+      const interval = setInterval(() => {
+        fetchMyMessages();
+      }, 10000);
 
-      return () => { supabase.removeChannel(channel); };
+      return () => clearInterval(interval);
     }
   }, [isAuthenticated, user]);
 

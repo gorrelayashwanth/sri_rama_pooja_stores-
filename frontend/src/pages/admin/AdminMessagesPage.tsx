@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import api from "../../api/axios";
-import { supabase } from "../../config/supabaseClient";
 
 interface Message {
   id: string;
@@ -51,25 +50,12 @@ export function AdminMessagesPage() {
   useEffect(() => {
     fetchMessages();
 
-    // Subscribe to messages changes
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'messages'
-        },
-        () => {
-          fetchMessages(); // Refresh list on any change
-        }
-      )
-      .subscribe();
+    // Poll every 10 seconds for new messages instead of relying on Supabase sockets
+    const interval = setInterval(() => {
+      fetchMessages();
+    }, 10000);
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => clearInterval(interval);
   }, []);
 
   const handleReply = async (parentId: string, email: string, name: string) => {
