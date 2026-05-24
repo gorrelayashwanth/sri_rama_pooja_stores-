@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ProductCarousel } from "../../components/home/ProductCarousel";
 import { useAuthStore } from "../../store/authStore";
+import { useCartStore } from "../../store/cartStore";
 import { useLanguage } from "../../context/LanguageContext";
 import api from "../../api/axios";
 import placeholderImage from "../../assets/pooja-placeholder.svg";
@@ -446,7 +447,6 @@ export function ProductDetailPage() {
               </div>
             )}
           </div>
-        </div>
         </div>
 
         {/* Related Products */}
