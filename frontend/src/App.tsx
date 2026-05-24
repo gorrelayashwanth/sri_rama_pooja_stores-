@@ -68,7 +68,6 @@ function AppShell() {
       {!isAdminRoute && <AnnouncementBar />}
       {(!isAdminRoute || isAdminLogin) && !isAdminLogin && <Navbar />}
       <main className="flex-grow flex flex-col">
-        <LanguageProvider>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/collections" element={<CollectionsPage />} />
@@ -98,7 +97,6 @@ function AppShell() {
             <Route path="/admin/content" element={<AdminProtectedRoute><AdminContentPage /></AdminProtectedRoute>} />
             <Route path="/admin/*" element={<Navigate to="/admin/orders" replace />} />
           </Routes>
-        </LanguageProvider>
       </main>
       {!isAdminRoute && <Footer />}
     </div>
@@ -109,7 +107,9 @@ function App() {
   return (
     <BrowserRouter>
       <SettingsProvider>
-        <AppShell />
+        <LanguageProvider>
+          <AppShell />
+        </LanguageProvider>
       </SettingsProvider>
     </BrowserRouter>
   );
