@@ -54,3 +54,11 @@
 ::-webkit-scrollbar-thumb {
   @apply bg-saffron-200 rounded-full hover:bg-saffron-300 transition-colors;
 }
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
