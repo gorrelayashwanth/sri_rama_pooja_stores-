@@ -26,10 +26,10 @@ export function Navbar() {
             ) : (
               <div className="flex flex-col">
                 <span className="text-2xl md:text-3xl font-playfair font-black text-saffron-600 tracking-tighter leading-none">
-                  {settings?.storeName?.split(' ')[0] || "SRI RAMA"}
+                  {settings?.storeName?.split?.(' ')?.[0] || "SRI RAMA"}
                 </span>
                 <span className="text-[10px] md:text-xs font-bold text-puja-muted uppercase tracking-[0.3em] leading-none mt-1">
-                  {settings?.storeName?.split(' ').slice(1).join(' ') || "Pooja Store"}
+                  {settings?.storeName?.split?.(' ')?.slice?.(1)?.join?.(' ') || "Pooja Store"}
                 </span>
               </div>
             )}
@@ -94,7 +94,7 @@ export function Navbar() {
                   <span className="hidden lg:inline text-[10px] font-black uppercase tracking-widest leading-none mb-1">
                     {isAdmin ? 'Admin' : 'Account'}
                   </span>
-                  <span className="hidden lg:inline text-xs font-bold leading-none text-puja-muted">{user?.name?.split(' ')[0]}</span>
+                  <span className="hidden lg:inline text-xs font-bold leading-none text-puja-muted">{user?.name?.split?.(' ')?.[0]}</span>
                 </div>
               </Link>
               <button onClick={logout} className="text-puja-muted hover:text-red-500 transition">
