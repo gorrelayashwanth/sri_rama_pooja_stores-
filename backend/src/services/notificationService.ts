@@ -1,41 +1,70 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendConfirmationEmail = void 0;
-const nodemailer_1 = __importDefault(require("nodemailer"));
+import nodemailer from "nodemailer";
+
 // Creates SMTP Transporter if credentials exist in env
 const getTransporter = () => {
-    const host = process.env.SMTP_HOST;
-    const port = Number(process.env.SMTP_PORT || 587);
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
-    if (host && user && pass) {
-        return nodemailer_1.default.createTransport({
-            host,
-            port,
-            secure: port === 465,
-            auth: { user, pass }
-        });
-    }
-    return null;
+  const host = process.env.SMTP_HOST;
+  const port = Number(process.env.SMTP_PORT || 587);
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+
+  if (host && user && pass) {
+    return nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      auth: { user, pass }
+    });
+  }
+  return null;
 };
-const sendConfirmationEmail = async (payload) => {
-    const { email, orderNumber, payableAmount, items, shippingFee, discountAmount, totalAmount, deliveryAddress, phone, orderId, latitude, longitude } = payload;
-    const trackingLink = `https://sri-rama-pooja-stores.vercel.app/order-tracking/${orderId}`;
-    // Directions link based on captured GPS coords
-    const mapsLink = latitude && longitude
-        ? `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`
-        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(deliveryAddress)}`;
-    const itemsHtml = items.map(item => `
+
+interface EmailPayload {
+  email: string;
+  orderNumber: string;
+  payableAmount: number;
+  items: any[];
+  shippingFee: number;
+  discountAmount: number;
+  totalAmount: number;
+  deliveryAddress: string;
+  phone: string;
+  orderId: string;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+export const sendConfirmationEmail = async (payload: EmailPayload) => {
+  const {
+    email,
+    orderNumber,
+    payableAmount,
+    items,
+    shippingFee,
+    discountAmount,
+    totalAmount,
+    deliveryAddress,
+    phone,
+    orderId,
+    latitude,
+    longitude
+  } = payload;
+
+  const trackingLink = `https://sri-rama-pooja-stores.vercel.app/order-tracking/${orderId}`;
+  
+  // Directions link based on captured GPS coords
+  const mapsLink = latitude && longitude 
+    ? `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(deliveryAddress)}`;
+
+  const itemsHtml = items.map(item => `
     <tr>
       <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.product?.name || "Sacred Item"} ${item.selectedTier ? `(${item.selectedTier})` : ""}</td>
       <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">x${item.quantity}</td>
       <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₹${item.price * item.quantity}</td>
     </tr>
   `).join("");
-    const emailHtml = `
+
+  const emailHtml = `
     <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
       <div style="background-color: #2d4a2d; padding: 30px; text-align: center; color: white;">
         <h1 style="margin: 0; font-family: Georgia, serif; font-size: 28px; font-weight: normal;">Sri Rama Pooja Store</h1>
@@ -97,25 +126,24 @@ const sendConfirmationEmail = async (payload) => {
       </div>
     </div>
   `;
-    const transporter = getTransporter();
-    if (transporter) {
-        try {
-            const fromEmail = process.env.EMAIL_FROM || '"Sri Rama Pooja Store" <noreply@sriramapooja.com>';
-            await transporter.sendMail({
-                from: fromEmail,
-                to: email,
-                subject: `🕉️ Order Confirmed: ${orderNumber} - Sri Rama Pooja Store`,
-                html: emailHtml
-            });
-            console.log(`✉️ Confirmation email sent successfully to: ${email}`);
-        }
-        catch (err) {
-            console.error("❌ Failed to send confirmation email via SMTP:", err);
-        }
+
+  const transporter = getTransporter();
+  if (transporter) {
+    try {
+      const fromEmail = process.env.EMAIL_FROM || '"Sri Rama Pooja Store" <noreply@sriramapooja.com>';
+      await transporter.sendMail({
+        from: fromEmail,
+        to: email,
+        subject: `🕉️ Order Confirmed: ${orderNumber} - Sri Rama Pooja Store`,
+        html: emailHtml
+      });
+      console.log(`✉️ Confirmation email sent successfully to: ${email}`);
+    } catch (err) {
+      console.error("❌ Failed to send confirmation email via SMTP:", err);
     }
-    else {
-        // Falls back to logging mock email structure to console
-        console.log(`
+  } else {
+    // Falls back to logging mock email structure to console
+    console.log(`
 =========================================
 📧 MOCK EMAIL NOTIFICATION (SMTP NOT SET)
 To: ${email}
@@ -128,6 +156,5 @@ Tracking URL: ${trackingLink}
 Google Maps: ${mapsLink}
 =========================================
     `);
-    }
+  }
 };
-exports.sendConfirmationEmail = sendConfirmationEmail;

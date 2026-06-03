@@ -40,6 +40,7 @@ export type Product = {
   deity: string[];
   imagePrompt?: string;
   images: ProductImage[];
+  priceTiers?: any;
   createdAt: string;
   updatedAt: string;
 }

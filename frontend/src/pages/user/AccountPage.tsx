@@ -1,5 +1,6 @@
 import { useAuthStore } from "../../store/authStore";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../../api/axios";
 
 export function AccountPage() {
@@ -95,18 +96,26 @@ export function AccountPage() {
                     <div key={order.id} className="border border-gray-100 rounded-2xl p-6">
                       <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-50">
                         <div>
-                          <p className="text-sm text-puja-muted font-bold">Order #{order.id.substring(0, 8).toUpperCase()}</p>
+                          <p className="text-sm text-puja-muted font-bold">Order #{order.orderNumber || order.id.substring(0, 8).toUpperCase()}</p>
                           <p className="text-xs text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-lg font-black text-puja-text">₹{order.total}</p>
-                          <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
-                            order.status === 'DELIVERED' ? 'bg-green-50 text-green-600' :
-                            order.status === 'CANCELLED' ? 'bg-red-50 text-red-600' :
-                            'bg-saffron-50 text-saffron-600'
-                          }`}>
-                            {order.status}
-                          </span>
+                        <div className="text-right flex flex-col items-end gap-1.5">
+                          <p className="text-lg font-black text-puja-text">₹{order.payableAmount}</p>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
+                              order.status === 'DELIVERED' ? 'bg-green-50 text-green-600' :
+                              order.status === 'CANCELLED' ? 'bg-red-50 text-red-600' :
+                              'bg-saffron-50 text-saffron-600'
+                            }`}>
+                              {order.status}
+                            </span>
+                            <Link 
+                              to={`/order-tracking/${order.id}`}
+                              className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-[#2d4a2d] text-white rounded-full hover:bg-black transition-all"
+                            >
+                              Track
+                            </Link>
+                          </div>
                         </div>
                       </div>
                       <div className="space-y-3">

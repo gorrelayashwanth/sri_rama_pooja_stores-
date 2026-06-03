@@ -1,0 +1,16 @@
+{
+  "short_name": "Pooja Admin",
+  "name": "Sri Rama Pooja Store Admin",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": "/admin",
+  "background_color": "#2d4a2d",
+  "theme_color": "#2d4a2d",
+  "display": "standalone",
+  "orientation": "portrait"
+}

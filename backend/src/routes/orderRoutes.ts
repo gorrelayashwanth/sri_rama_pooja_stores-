@@ -14,12 +14,12 @@ const router = Router();
 // Customer routes (must be before /:id admin routes)
 router.post('/', authenticate, createOrder);
 router.get('/my-orders', authenticate, getMyOrders);
+router.get('/:id', authenticate, getOrderDetail);
 
 // Admin routes
 router.use(authenticate, authorizeAdmin);
 router.get('/', getOrders);
 router.get('/recent', getRecentPlacedOrders);
-router.get('/:id', getOrderDetail);
 router.patch('/:id/status', updateOrderStatus);
 
 export default router;

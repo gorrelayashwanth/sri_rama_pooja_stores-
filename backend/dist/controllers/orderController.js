@@ -1,43 +1,12 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getRecentPlacedOrders = exports.getOrderDetail = exports.updateOrderStatus = exports.getOrders = exports.getMyOrders = exports.createOrder = void 0;
 const prisma_1 = __importDefault(require("../utils/prisma"));
+const socketService_1 = require("../services/socketService");
+const notificationService_1 = require("../services/notificationService");
 const getSingleParam = (value) => Array.isArray(value) ? value[0] : value;
 const generateOrderNumber = () => `SRP-${Date.now().toString(36).toUpperCase().slice(-8)}`;
 /** Parse checkout address string: "line1, city - pincode" */
@@ -59,8 +28,8 @@ function parseCheckoutAddress(addressStr) {
     }
     return { line1, city, pincode };
 }
-/** Haversine formula to compute distance in km between two sets of coordinates */
-function getDistanceKm(lat1, lon1, lat2, lon2) {
+/** Calculate straight-line distance in km via Haversine Formula */
+function getHaversineDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; // Radius of the earth in km
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -68,8 +37,7 @@ function getDistanceKm(lat1, lon1, lat2, lon2) {
         Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
             Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const d = R * c; // Distance in km
-    return d;
+    return R * c; // Distance in km
 }
 const createOrder = async (req, res, next) => {
     try {
@@ -92,46 +60,36 @@ const createOrder = async (req, res, next) => {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
         const { line1, city, pincode } = parseCheckoutAddress(String(address));
-        // Fetch delivery settings for bounds check and rates
-        let settings = await prisma_1.default.setting.findUnique({
-            where: { id: 'singleton' }
-        });
-        if (!settings) {
-            settings = await prisma_1.default.setting.create({
-                data: { id: 'singleton' }
-            });
-        }
-        const storeLat = settings.storeLatitude ?? 16.5186;
-        const storeLng = settings.storeLongitude ?? 80.6200;
-        const deliveryRadiusKm = settings.deliveryRadiusKm ?? 15;
-        const deliveryRatePerKm = settings.deliveryRatePerKm ?? 10;
-        // Geofencing Check
-        let calculatedDistance = 0;
-        let locationRestricted = false;
+        // Get delivery settings configuration
+        const settings = await prisma_1.default.setting.findUnique({ where: { id: 'singleton' } });
+        const storeLat = settings?.storeLatitude ?? 16.5186;
+        const storeLng = settings?.storeLongitude ?? 80.6200;
+        const ratePerKm = settings?.deliveryRatePerKm ?? 10;
+        const maxRadius = settings?.deliveryRadiusKm ?? 15;
+        let shippingFee = 99; // Fallback shipping fee
+        let distance = 0;
+        // Check delivery zone and calculate dynamic delivery fee if coordinates provided
         if (latitude != null && longitude != null) {
-            const latVal = Number(latitude);
-            const lngVal = Number(longitude);
-            if (!isNaN(latVal) && !isNaN(lngVal)) {
-                calculatedDistance = getDistanceKm(storeLat, storeLng, latVal, lngVal);
-                if (calculatedDistance > deliveryRadiusKm) {
-                    locationRestricted = true;
-                }
+            distance = getHaversineDistance(Number(latitude), Number(longitude), storeLat, storeLng);
+            // Enforce boundary check at API level
+            if (distance > maxRadius) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Delivery is currently available only in and around Vijayawada (max ${maxRadius}km radius). Your location is ${distance.toFixed(1)}km away.`
+                });
             }
+            shippingFee = Math.round(distance * ratePerKm);
         }
         else {
-            // Fallback check on text address city and pincode
-            const cityLower = city.toLowerCase();
-            const isVijayawada = cityLower.includes("vijayawada") || cityLower.includes("wada");
-            const isVijayawadaPincode = pincode.startsWith("520") || pincode.startsWith("521");
-            if (!isVijayawada && !isVijayawadaPincode) {
-                locationRestricted = true;
+            // Pincode fallback check: check if it starts with 520 or 521 (Vijayawada and Krishna district area)
+            const pinStr = String(pincode).trim();
+            const isVijayawadaPin = pinStr.startsWith('520') || pinStr.startsWith('521');
+            if (!isVijayawadaPin) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Delivery is currently available only in and around Vijayawada (Krishna District pincode required).'
+                });
             }
-        }
-        if (locationRestricted) {
-            return res.status(400).json({
-                success: false,
-                message: "Delivery is currently available only in and around Vijayawada."
-            });
         }
         const deliveryAddress = await prisma_1.default.address.create({
             data: {
@@ -172,23 +130,11 @@ const createOrder = async (req, res, next) => {
                 quantity: item.quantity,
                 price: unitPrice,
                 total: lineTotal,
-                selectedTier: item.selectedTier || null
+                selectedTier: item.selectedTier || null,
             });
         }
-        // Auto Delivery Fare Calculation
-        let shippingFee = 0;
-        if (latitude != null && longitude != null && calculatedDistance > 0) {
-            shippingFee = Math.round(calculatedDistance * deliveryRatePerKm);
-            if (subtotal > 1000) {
-                shippingFee = 0;
-            }
-            else {
-                shippingFee = Math.max(30, shippingFee);
-            }
-        }
-        else {
-            shippingFee = subtotal > 1000 ? 0 : 99;
-        }
+        // Dynamic shipping fee is free above ₹1000 order value
+        const finalShippingFee = subtotal > 1000 ? 0 : shippingFee;
         let discountAmount = 0;
         if (couponCode) {
             const coupon = await prisma_1.default.coupon.findUnique({
@@ -211,7 +157,7 @@ const createOrder = async (req, res, next) => {
                 }
             }
         }
-        const payableAmount = Math.max(0, subtotal + shippingFee - discountAmount);
+        const payableAmount = Math.max(0, subtotal + finalShippingFee - discountAmount);
         const order = await prisma_1.default.$transaction(async (tx) => {
             const created = await tx.order.create({
                 data: {
@@ -220,22 +166,14 @@ const createOrder = async (req, res, next) => {
                     addressId: deliveryAddress.id,
                     totalAmount: subtotal,
                     discountAmount,
-                    shippingFee,
+                    shippingFee: finalShippingFee,
                     payableAmount,
                     paymentMethod: paymentMethod === 'COD' ? 'COD' : 'COD',
                     paymentStatus: 'PENDING',
                     status: 'PLACED',
-                    latitude: latitude != null ? Number(latitude) : null,
-                    longitude: longitude != null ? Number(longitude) : null,
-                    items: {
-                        create: orderItemsData.map(item => ({
-                            productId: item.productId,
-                            quantity: item.quantity,
-                            price: item.price,
-                            total: item.total,
-                            selectedTier: item.selectedTier
-                        }))
-                    },
+                    latitude: latitude ? Number(latitude) : null,
+                    longitude: longitude ? Number(longitude) : null,
+                    items: { create: orderItemsData },
                 },
                 include: {
                     items: { include: { product: { select: { name: true } } } },
@@ -250,73 +188,47 @@ const createOrder = async (req, res, next) => {
             }
             return created;
         });
-        // Emit live Socket.io order alert
-        const io = req.app.get('io');
-        if (io) {
-            io.emit('new_order', order);
+        // Broadcast new order real-time event via WebSocket
+        try {
+            const orderForSocket = await prisma_1.default.order.findUnique({
+                where: { id: order.id },
+                include: {
+                    user: { select: { name: true, phone: true, email: true } },
+                    address: true,
+                    items: {
+                        include: {
+                            product: { select: { name: true } }
+                        }
+                    }
+                }
+            });
+            if (orderForSocket) {
+                (0, socketService_1.emitNewOrder)(orderForSocket);
+            }
         }
-        // Trigger SMS and Email confirmations in background
-        const trackingUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/orders/${order.id}/track`;
-        const smsMessage = `Sri Rama Pooja Store: Order #${order.orderNumber} placed! Total: ₹${order.payableAmount}. Tracking ID: ${order.orderNumber}. Est. Delivery: 45-60 min. Track: ${trackingUrl}`;
-        Promise.resolve().then(() => __importStar(require('../services/notificationService'))).then((module) => {
-            module.sendSMS(String(phone), smsMessage);
-            const orderItemsHtml = order.items.map((item) => `
-        <tr>
-          <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.product.name} ${item.selectedTier ? `(${item.selectedTier})` : ''}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">x${item.quantity}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₹${item.price * item.quantity}</td>
-        </tr>
-      `).join('');
-            const emailSubject = `Order Confirmation - Sri Rama Pooja Store (#${order.orderNumber})`;
-            const emailHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 10px; padding: 20px; color: #333;">
-          <h2 style="color: #2d4a2d; text-align: center;">Sri Rama Pooja Store</h2>
-          <p style="text-align: center; color: #666; font-style: italic;">Pure Devotion, Delivered to Your Door</p>
-          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-          <p>Dear ${user.name},</p>
-          <p>Thank you for your order! Your order has been placed successfully. Here is your order summary:</p>
-          
-          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-            <thead>
-              <tr style="background-color: #fcfaf7;">
-                <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Item</th>
-                <th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd;">Qty</th>
-                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${orderItemsHtml}
-            </tbody>
-          </table>
-          
-          <div style="text-align: right; margin-top: 20px;">
-            <p>Subtotal: <strong>₹${order.totalAmount}</strong></p>
-            <p>Discount: <strong>-₹${order.discountAmount}</strong></p>
-            <p>Delivery Charge: <strong>₹${order.shippingFee}</strong></p>
-            <h3 style="color: #2d4a2d; font-size: 20px; margin: 10px 0;">Total Payable: ₹${order.payableAmount}</h3>
-          </div>
-          
-          <div style="background-color: #f4f7f4; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2ede2;">
-            <p style="margin: 0; font-weight: bold; color: #2d4a2d;">Delivery Address:</p>
-            <p style="margin: 5px 0 0 0; font-size: 14px;">
-              ${order.address.fullName}<br>
-              ${order.address.line1}, ${order.address.city} - ${order.address.pincode}<br>
-              Phone: ${order.address.phone}
-            </p>
-          </div>
-
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${trackingUrl}" style="background-color: #2d4a2d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Track Your Order</a>
-          </div>
-
-          <div style="text-align: center; color: #999; font-size: 12px; margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
-             <p>Sri Rama Pooja Store, Door No. 23, 11-116, Nageswara Rao Pantulu Rd, Satyaranayana Puram, Vijayawada, AP 520011</p>
-             <p>Support: 092992 07650 | Email: sriramapoojastore@gmail.com</p>
-          </div>
-        </div>
-      `;
-            module.sendEmail(user.email, emailSubject, emailHtml);
-        }).catch(err => console.error("Failed to run notification tasks:", err));
+        catch (err) {
+            console.error("Socket emit failed", err);
+        }
+        // Trigger email alerts asynchronously
+        try {
+            (0, notificationService_1.sendConfirmationEmail)({
+                email: user.email,
+                orderNumber: order.orderNumber,
+                payableAmount: order.payableAmount,
+                items: order.items,
+                shippingFee: order.shippingFee,
+                discountAmount: order.discountAmount,
+                totalAmount: order.totalAmount,
+                deliveryAddress: `${deliveryAddress.line1}, ${deliveryAddress.city} - ${deliveryAddress.pincode}`,
+                phone: deliveryAddress.phone,
+                orderId: order.id,
+                latitude: order.latitude,
+                longitude: order.longitude
+            }).catch((err) => console.error("Async email send failed:", err));
+        }
+        catch (err) {
+            console.error("Nodemailer trigger failed", err);
+        }
         res.status(201).json({
             success: true,
             message: 'Order placed successfully',
@@ -415,11 +327,6 @@ const updateOrderStatus = async (req, res, next) => {
                 user: { select: { name: true } }
             }
         });
-        // Notify connected clients of order status update
-        const io = req.app.get('io');
-        if (io) {
-            io.emit('order_status_updated', { id: order.id, status: order.status });
-        }
         res.status(200).json({ success: true, message: 'Order status updated', data: order });
     }
     catch (error) {
@@ -447,6 +354,10 @@ const getOrderDetail = async (req, res, next) => {
         });
         if (!order) {
             return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+        // Check if the user is an admin or the owner of the order
+        if (req.user?.role !== 'ADMIN' && req.user?.role !== 'CHIEF_ADMIN' && order.userId !== req.user?.id) {
+            return res.status(403).json({ success: false, message: 'Unauthorized access to this order' });
         }
         res.status(200).json({ success: true, data: order });
     }

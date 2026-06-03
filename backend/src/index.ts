@@ -62,14 +62,32 @@ app.get("/api/v1/health", (req, res) => {
   });
 });
 
+import http from 'http';
+import path from 'path';
+import fs from 'fs';
+import { initSocket } from './services/socketService';
+
+// Ensure uploads folder exists
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Serve static uploaded files
+app.use('/uploads', express.static(uploadsDir));
+
 // Error Handler
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+const server = http.createServer(app);
+initSocket(server);
+
+server.listen(PORT, () => {
   console.log(`
     🚀 Server ready at: http://localhost:${PORT}
     🛡️ Mode: ${process.env.NODE_ENV || 'development'}
   `);
 });
+

@@ -50,6 +50,7 @@ const createInitialFormData = () => ({
   deity: "",
   imagePrompt: "",
   isFeatured: false,
+  priceTiers: [] as { weight: string; price: number; salePrice: number | null }[],
 });
 
 const slugify = (value: string) =>
@@ -87,6 +88,13 @@ export function AdminProductsPage() {
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
   const [formData, setFormData] = useState(createInitialFormData());
+
+  // Custom states for details view, photo uploads, and price variant configuration
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [newTierWeight, setNewTierWeight] = useState("");
+  const [newTierPrice, setNewTierPrice] = useState("");
+  const [newTierSalePrice, setNewTierSalePrice] = useState("");
 
   const fetchProducts = async (page = 1) => {
     setLoading(true);
@@ -187,6 +195,9 @@ export function AdminProductsPage() {
       deity: (product.deity || []).join(", "),
       imagePrompt: product.imagePrompt || "",
       isFeatured: Boolean(product.isFeatured),
+      priceTiers: product.priceTiers
+        ? (typeof product.priceTiers === 'string' ? JSON.parse(product.priceTiers) : product.priceTiers)
+        : [],
     });
     setIsAddOpen(true);
     setSubmitSuccess("");
@@ -206,7 +217,67 @@ export function AdminProductsPage() {
     images: formData.imageUrl
       ? [{ url: formData.imageUrl, publicId: `manual-${formData.slug}` }]
       : [],
+    priceTiers: formData.priceTiers,
   });
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const uploadFormData = new FormData();
+    uploadFormData.append('image', file);
+
+    setSubmitError("");
+    setSubmitSuccess("");
+    setIsUploadingPhoto(true);
+
+    try {
+      const response = await api.post('/media/upload', uploadFormData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      if (response.data?.success) {
+        const uploadedUrl = response.data.data.url;
+        setFormData(prev => ({
+          ...prev,
+          imageUrl: uploadedUrl
+        }));
+        setSubmitSuccess("Photo uploaded successfully!");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setSubmitError(err.response?.data?.message || "Failed to upload photo. Ensure file is an image.");
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handleAddPriceTier = () => {
+    if (!newTierWeight.trim() || !newTierPrice.trim()) {
+      alert("Weight and Price are required to add a tier.");
+      return;
+    }
+    const tier = {
+      weight: newTierWeight.trim(),
+      price: Number(newTierPrice),
+      salePrice: newTierSalePrice.trim() ? Number(newTierSalePrice) : null,
+    };
+    setFormData(prev => ({
+      ...prev,
+      priceTiers: [...(prev.priceTiers || []), tier]
+    }));
+    setNewTierWeight("");
+    setNewTierPrice("");
+    setNewTierSalePrice("");
+  };
+
+  const handleRemovePriceTier = (idx: number) => {
+    setFormData(prev => ({
+      ...prev,
+      priceTiers: (prev.priceTiers || []).filter((_, i) => i !== idx)
+    }));
+  };
 
   const handleCreateProduct = async () => {
     if (!formData.name || !formData.slug || !formData.description || !formData.price || !formData.sku || !formData.categoryId) {
@@ -386,8 +457,8 @@ export function AdminProductsPage() {
           </div>
         )}
 
-        {/* Table Container */}
-        <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
+        {/* Desktop View Table */}
+        <div className="hidden lg:block bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
@@ -484,9 +555,9 @@ export function AdminProductsPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => window.open(`/products/${product.slug}`, "_blank")}
+                            onClick={() => setDetailProduct(product)}
                             className="p-2.5 text-gray-400 hover:text-puja-text hover:bg-gray-50 rounded-xl transition-colors"
-                            title="View on store"
+                            title="View specs detail modal"
                           >
                             <Eye className="h-4 w-4" />
                           </button>
@@ -514,41 +585,122 @@ export function AdminProductsPage() {
               </tbody>
             </table>
           </div>
+        </div>
 
-          {/* Pagination */}
-          <div className="px-8 py-6 border-t border-gray-50 bg-gray-50/30 flex items-center justify-between">
-            <p className="text-xs text-gray-400 font-medium tracking-tight">
-              Showing <span className="text-puja-text font-bold">{products.length}</span> of <span className="text-puja-text font-bold">{pagination.total}</span> products
-            </p>
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => fetchProducts(pagination.page - 1)}
-                disabled={pagination.page === 1}
-                className="p-2 rounded-xl border border-gray-100 bg-white text-gray-400 hover:text-puja-text disabled:opacity-50 transition-all shadow-sm"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              {[...Array(pagination.totalPages)].map((_, i) => (
-                <button 
-                  key={i}
-                  onClick={() => fetchProducts(i + 1)}
-                  className={`w-8 h-8 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                    pagination.page === i + 1 
-                      ? 'bg-[#2d4a2d] text-white shadow-green-100' 
-                      : 'bg-white border border-gray-100 text-gray-400 hover:text-puja-text'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-              <button 
-                onClick={() => fetchProducts(pagination.page + 1)}
-                disabled={pagination.page === pagination.totalPages}
-                className="p-2 rounded-xl border border-gray-100 bg-white text-gray-400 hover:text-puja-text disabled:opacity-50 transition-all shadow-sm"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
+        {/* Mobile View Card Grid */}
+        <div className="lg:hidden space-y-4">
+          {loading ? (
+            <div className="bg-white rounded-[32px] p-12 text-center border border-gray-100 flex flex-col items-center gap-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-saffron-500"></div>
+              <p className="text-sm text-[#2d4a2d] font-medium">Loading products...</p>
             </div>
+          ) : products.length === 0 ? (
+            <div className="bg-white rounded-[32px] p-12 text-center border border-gray-100 italic text-gray-400">
+              {loadError ? "Products could not be loaded from the backend." : "No products found matching your search."}
+            </div>
+          ) : (
+            products.map((product) => (
+              <div key={product.id} className="bg-white rounded-[32px] border border-gray-100 p-5 shadow-sm space-y-4">
+                <div className="flex gap-4">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
+                    <img 
+                      src={product.images?.[0]?.url || placeholderImage} 
+                      alt={product.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-sm text-puja-text truncate">{product.name}</h3>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter mt-0.5">SKU: {product.sku}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-[10px] font-bold text-saffron-600 bg-saffron-50 px-2 py-0.5 rounded-md">
+                        {product.category?.name || "General"}
+                      </span>
+                      <span className={`text-[10px] font-bold ${product.stock < 10 ? 'text-red-500 font-black' : 'text-gray-500'}`}>
+                        Stock: {product.stock}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center border-t border-gray-50 pt-4">
+                  <div>
+                    <span className="text-sm font-black text-puja-text">
+                      ₹{(product.salePrice && product.salePrice > 0 ? product.salePrice : product.price).toLocaleString("en-IN")}
+                    </span>
+                    {product.salePrice != null && product.salePrice > 0 && product.salePrice < product.price && (
+                      <span className="text-[10px] text-gray-400 line-through block">₹{product.price}</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button 
+                      type="button"
+                      onClick={() => toggleAvailability(product.id)}
+                      className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-tighter border transition-all ${
+                        product.isAvailable 
+                          ? 'bg-green-50 text-green-600 border-green-100' 
+                          : 'bg-red-50 text-red-600 border-red-100'
+                      }`}
+                    >
+                      {product.isAvailable ? 'Active' : 'Inactive'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDetailProduct(product)}
+                      className="p-2 text-gray-400 hover:text-puja-text"
+                      title="View specs detail modal"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(product)}
+                      className="p-2 text-gray-400 hover:text-saffron-600"
+                      title="Edit product"
+                    >
+                      <Edit3 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Shared Pagination */}
+        <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm px-8 py-6 bg-gray-50/30 flex items-center justify-between">
+          <p className="text-xs text-gray-400 font-medium tracking-tight">
+            Showing <span className="text-puja-text font-bold">{products.length}</span> of <span className="text-puja-text font-bold">{pagination.total}</span> products
+          </p>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => fetchProducts(pagination.page - 1)}
+              disabled={pagination.page === 1}
+              className="p-2 rounded-xl border border-gray-100 bg-white text-gray-400 hover:text-puja-text disabled:opacity-50 transition-all shadow-sm"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            {[...Array(pagination.totalPages)].map((_, i) => (
+              <button 
+                key={i}
+                onClick={() => fetchProducts(i + 1)}
+                className={`w-8 h-8 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                  pagination.page === i + 1 
+                    ? 'bg-[#2d4a2d] text-white shadow-green-100' 
+                    : 'bg-white border border-gray-100 text-gray-400 hover:text-puja-text'
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button 
+              onClick={() => fetchProducts(pagination.page + 1)}
+              disabled={pagination.page === pagination.totalPages}
+              className="p-2 rounded-xl border border-gray-100 bg-white text-gray-400 hover:text-puja-text disabled:opacity-50 transition-all shadow-sm"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
@@ -759,15 +911,114 @@ export function AdminProductsPage() {
                     className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100"
                   />
                 </label>
-                <label className="space-y-2 md:col-span-2">
-                  <span className="text-sm font-bold text-puja-text">Image URL</span>
-                  <input
-                    value={formData.imageUrl}
-                    onChange={(e) => handleFieldChange("imageUrl", e.target.value)}
-                    placeholder="https://example.com/product-image.jpg"
-                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100"
-                  />
-                </label>
+                <div className="space-y-2 md:col-span-2 border-t border-gray-100 pt-6">
+                  <span className="text-sm font-black text-[#2d4a2d] block uppercase tracking-wider">Product Photo Upload</span>
+                  <div className="flex flex-col sm:flex-row items-center gap-4 bg-gray-50 p-6 rounded-3xl border border-gray-150">
+                    <div className="w-20 h-20 bg-white border rounded-2xl overflow-hidden shrink-0">
+                      <img src={formData.imageUrl || placeholderImage} alt="Preview" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 w-full space-y-2">
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        disabled={isUploadingPhoto}
+                        className="text-xs text-puja-muted file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:bg-[#2d4a2d] file:text-white hover:file:bg-black file:cursor-pointer"
+                      />
+                      <p className="text-[10px] text-gray-400">Supported formats: JPG, PNG, WEBP. Uploads directly to storage.</p>
+                      {isUploadingPhoto && <span className="text-xs text-saffron-600 font-bold block animate-pulse">Uploading photo...</span>}
+                    </div>
+                  </div>
+                  <label className="block space-y-2 mt-4">
+                    <span className="text-xs font-bold text-puja-text">Or Paste Custom Image URL</span>
+                    <input
+                      value={formData.imageUrl}
+                      onChange={(e) => handleFieldChange("imageUrl", e.target.value)}
+                      placeholder="https://example.com/product-image.jpg"
+                      className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100"
+                    />
+                  </label>
+                </div>
+
+                {/* Price/Weight Tiers Configurator */}
+                <div className="space-y-4 md:col-span-2 border-t border-gray-100 pt-6">
+                  <div>
+                    <span className="text-sm font-black text-[#2d4a2d] block uppercase tracking-wider">Quantity / Weight Price Tiers</span>
+                    <p className="text-xs text-puja-muted mt-0.5">Configure distinct pricing for weight variants (e.g., 250g, 500g, 1kg).</p>
+                  </div>
+
+                  {formData.priceTiers && formData.priceTiers.length > 0 && (
+                    <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-inner">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="bg-gray-50 border-b border-gray-150">
+                            <th className="px-4 py-3 font-bold text-puja-text">Weight / Variant</th>
+                            <th className="px-4 py-3 font-bold text-puja-text">Original Price</th>
+                            <th className="px-4 py-3 font-bold text-puja-text">Sale Price</th>
+                            <th className="px-4 py-3 font-bold text-puja-text text-right">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {formData.priceTiers.map((tier, idx) => (
+                            <tr key={idx}>
+                              <td className="px-4 py-3 font-bold text-puja-text">{tier.weight}</td>
+                              <td className="px-4 py-3 text-puja-muted">₹{tier.price}</td>
+                              <td className="px-4 py-3 text-saffron-600 font-bold">₹{tier.salePrice || '-'}</td>
+                              <td className="px-4 py-3 text-right">
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemovePriceTier(idx)}
+                                  className="text-red-500 hover:text-red-700 font-bold uppercase tracking-widest text-[9px] bg-red-50 px-2 py-1 rounded-lg border border-red-100"
+                                >
+                                  Delete
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 bg-gray-50 p-5 rounded-3xl border border-gray-150 items-end">
+                    <label className="space-y-1.5 col-span-1">
+                      <span className="text-xs font-bold text-puja-text">Weight</span>
+                      <input
+                        value={newTierWeight}
+                        onChange={(e) => setNewTierWeight(e.target.value)}
+                        placeholder="e.g. 500g"
+                        className="w-full rounded-xl border border-gray-250 bg-white px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                      />
+                    </label>
+                    <label className="space-y-1.5 col-span-1">
+                      <span className="text-xs font-bold text-puja-text">Price</span>
+                      <input
+                        type="number"
+                        value={newTierPrice}
+                        onChange={(e) => setNewTierPrice(e.target.value)}
+                        placeholder="Price"
+                        className="w-full rounded-xl border border-gray-250 bg-white px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                      />
+                    </label>
+                    <label className="space-y-1.5 col-span-1">
+                      <span className="text-xs font-bold text-puja-text">Sale Price</span>
+                      <input
+                        type="number"
+                        value={newTierSalePrice}
+                        onChange={(e) => setNewTierSalePrice(e.target.value)}
+                        placeholder="Sale (opt)"
+                        className="w-full rounded-xl border border-gray-250 bg-white px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleAddPriceTier}
+                      className="bg-[#2d4a2d] hover:bg-black text-white py-2 px-4 rounded-xl text-xs font-black uppercase tracking-widest h-fit"
+                    >
+                      Add Tier
+                    </button>
+                  </div>
+                </div>
               </div>
               </div>
 
@@ -846,6 +1097,127 @@ export function AdminProductsPage() {
                   className="rounded-2xl bg-[#2d4a2d] px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-[#1a2b1a] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSubmitting ? "Importing..." : "Import Products"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {detailProduct && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-2xl bg-white rounded-[32px] border border-gray-100 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
+              <div className="bg-[#2d4a2d] text-white p-6 md:p-8 flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl md:text-2xl font-playfair font-bold">Product Specification Details</h3>
+                  <p className="text-xs text-white/70 uppercase tracking-widest mt-1">SKU: {detailProduct.sku}</p>
+                </div>
+                <button
+                  onClick={() => setDetailProduct(null)}
+                  className="p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="p-6 md:p-8 overflow-y-auto space-y-6 flex-1 text-sm">
+                <div className="flex flex-col sm:flex-row gap-6">
+                  <div className="w-full sm:w-48 h-48 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
+                    <img 
+                      src={detailProduct.images?.[0]?.url || placeholderImage} 
+                      alt={detailProduct.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <h4 className="text-xl font-bold text-puja-text">{detailProduct.name}</h4>
+                    <p className="text-xs font-bold text-saffron-600 bg-saffron-50 px-2.5 py-1 rounded-lg w-fit">
+                      {detailProduct.category?.name || "General"}
+                    </p>
+                    <p className="text-puja-muted italic">"{detailProduct.description}"</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 border-t border-gray-100 pt-6">
+                  <div>
+                    <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">Price</span>
+                    <span className="text-sm font-black text-puja-text">₹{detailProduct.price}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">Sale Price</span>
+                    <span className="text-sm font-black text-puja-text">₹{detailProduct.salePrice || "N/A"}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">Available Stock</span>
+                    <span className="text-sm font-black text-puja-text">{detailProduct.stock} units</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">Status</span>
+                    <span className={`text-xs font-bold ${detailProduct.isAvailable ? 'text-green-600' : 'text-red-600'}`}>
+                      {detailProduct.isAvailable ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Price Tiers Specification */}
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-[#2d4a2d] mb-3">Weight / Quantity Price Tiers</h4>
+                  {detailProduct.priceTiers && (() => {
+                    const parsedTiers = typeof detailProduct.priceTiers === 'string' 
+                      ? JSON.parse(detailProduct.priceTiers) 
+                      : detailProduct.priceTiers;
+                    if (Array.isArray(parsedTiers) && parsedTiers.length > 0) {
+                      return (
+                        <div className="border border-gray-100 rounded-2xl overflow-hidden">
+                          <table className="w-full text-left text-xs">
+                            <thead>
+                              <tr className="bg-gray-50 border-b border-gray-100">
+                                <th className="px-4 py-2 font-black text-puja-text">Weight</th>
+                                <th className="px-4 py-2 font-black text-puja-text">Original Price</th>
+                                <th className="px-4 py-2 font-black text-puja-text">Sale Price</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-150">
+                              {parsedTiers.map((t: any, idx: number) => (
+                                <tr key={idx}>
+                                  <td className="px-4 py-2 font-bold text-puja-text">{t.weight}</td>
+                                  <td className="px-4 py-2 text-puja-muted">₹{t.price}</td>
+                                  <td className="px-4 py-2 text-saffron-600 font-bold">₹{t.salePrice || '-'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      );
+                    }
+                    return <p className="text-xs text-gray-400 italic">No custom weight tiers configured.</p>;
+                  })()}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 border-t border-gray-100 pt-6 text-xs">
+                  <div>
+                    <span className="text-gray-400 font-bold block">Material</span>
+                    <span className="font-medium text-puja-text">{detailProduct.material || "N/A"}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 font-bold block">Dimensions</span>
+                    <span className="font-medium text-puja-text">{detailProduct.dimensions || "N/A"}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 font-bold block">Weight Spec</span>
+                    <span className="font-medium text-puja-text">{detailProduct.weight || "N/A"}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 font-bold block">Featured?</span>
+                    <span className="font-medium text-puja-text">{detailProduct.isFeatured ? "Yes" : "No"}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-6 border-t border-gray-100 flex justify-end">
+                <button
+                  onClick={() => setDetailProduct(null)}
+                  className="bg-[#2d4a2d] text-white px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-black transition-all"
+                >
+                  Close View
                 </button>
               </div>
             </div>

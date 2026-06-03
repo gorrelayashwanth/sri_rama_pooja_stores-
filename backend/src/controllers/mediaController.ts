@@ -1,5 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 
+const getFileUrl = (file: any) => {
+  if (!file.path) return '';
+  const isUrl = file.path.startsWith('http://') || file.path.startsWith('https://');
+  return isUrl ? file.path : `/uploads/${file.filename}`;
+};
+
 export const uploadImage = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.file) {
@@ -12,7 +18,7 @@ export const uploadImage = async (req: Request, res: Response, next: NextFunctio
       success: true,
       message: 'Image uploaded successfully',
       data: {
-        url: file.path,
+        url: getFileUrl(file),
         publicId: file.filename
       }
     });
@@ -29,7 +35,7 @@ export const uploadImages = async (req: Request, res: Response, next: NextFuncti
     }
 
     const images = files.map(file => ({
-      url: file.path,
+      url: getFileUrl(file),
       publicId: file.filename
     }));
 

@@ -2,19 +2,32 @@ import { AdminHeader } from "../../components/admin/AdminHeader";
 import { AdminLayout } from "../../components/admin/AdminLayout";
 import { AdminOrderCard } from "../../components/admin/AdminOrderCard";
 import { ShoppingBag, RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import api from "../../api/axios";
+import { io, Socket } from "socket.io-client";
+
+const getSocketUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL || '';
+  if (envUrl) {
+    return envUrl.replace('/api/v1', '');
+  }
+  if (import.meta.env.PROD) {
+    return 'https://sriramapoojastores-production.up.railway.app';
+  }
+  return 'http://localhost:5000';
+};
 
 export function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
+  const socketRef = useRef<Socket | null>(null);
+  
   const statusFilter = "All Orders";
   const searchTerm = "";
 
-  const [previousPlacedOrderIds, setPreviousPlacedOrderIds] = useState<Set<string>>(new Set());
-
-  const fetchOrders = async () => {
-    setLoading(true);
+  const fetchOrders = async (showSpinner = false) => {
+    if (showSpinner) setLoading(true);
     try {
       const response = await api.get('/orders', {
         params: { 
@@ -22,31 +35,7 @@ export function AdminOrdersPage() {
           search: searchTerm
         }
       });
-      const fetchedOrders = response.data.data;
-      
-      // Check for new PLACED orders
-      const currentPlacedOrderIds = new Set<string>(
-        fetchedOrders.filter((o: any) => o.status === 'PLACED').map((o: any) => o.id)
-      );
-
-      // If we already had some placed orders loaded before (not first load), and we found new ones
-      if (previousPlacedOrderIds.size > 0) {
-        let hasNewOrder = false;
-        currentPlacedOrderIds.forEach(id => {
-          if (!previousPlacedOrderIds.has(id)) {
-            hasNewOrder = true;
-          }
-        });
-
-        if (hasNewOrder) {
-          // Play chime
-          const audio = new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=success-1-6297.mp3');
-          audio.play().catch(e => console.error("Audio play blocked by browser:", e));
-        }
-      }
-
-      setPreviousPlacedOrderIds(currentPlacedOrderIds);
-      setOrders(fetchedOrders);
+      setOrders(response.data.data);
     } catch (error) {
       console.error("Failed to fetch orders:", error);
     } finally {
@@ -55,13 +44,53 @@ export function AdminOrdersPage() {
   };
 
   useEffect(() => {
-    fetchOrders();
+    // Initial fetch with spinner
+    fetchOrders(true);
+
+    // Setup Socket.io client
+    const socketUrl = getSocketUrl();
+    console.log("Connecting to WebSocket server:", socketUrl);
+    const socket = io(socketUrl, {
+      transports: ["websocket"],
+      reconnectionAttempts: 10,
+      reconnectionDelay: 3000
+    });
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      console.log("WebSocket connected!");
+      setIsConnected(true);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("WebSocket disconnected");
+      setIsConnected(false);
+    });
+
+    socket.on("newOrder", (order: any) => {
+      console.log("🔔 Real-time order received via WebSocket:", order);
+      
+      // Play sound notification (chime)
+      const audio = new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=success-1-6297.mp3');
+      audio.play().catch(e => console.error("Audio play blocked by browser:", e));
+
+      // Prepend order
+      setOrders((prev) => {
+        if (prev.some(o => o.id === order.id)) return prev;
+        return [order, ...prev];
+      });
+    });
+
+    // Fallback silent poll every 30s
     const intervalId = window.setInterval(() => {
-      fetchOrders();
-    }, 10000); // Poll every 10s for hyper-local Quick Commerce
+      fetchOrders(false);
+    }, 30000);
 
     return () => {
       window.clearInterval(intervalId);
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
     };
   }, [statusFilter, searchTerm]);
 
@@ -74,12 +103,16 @@ export function AdminOrdersPage() {
       
       <div className="p-8 flex-1 flex flex-col space-y-6">
         {/* Real-time Status Indicator */}
-        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-green-600 bg-green-50 w-fit px-3 py-1 rounded-full border border-green-100">
+        <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest w-fit px-3 py-1 rounded-full border ${
+          isConnected 
+            ? "text-green-600 bg-green-50 border-green-100" 
+            : "text-amber-600 bg-amber-50 border-amber-100"
+        }`}>
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            {isConnected && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>}
+            <span className={`relative inline-flex rounded-full h-2 w-2 ${isConnected ? "bg-green-500" : "bg-amber-500"}`}></span>
           </span>
-          Live Monitoring Active
+          {isConnected ? "Live Monitor Connected" : "Connecting to Live Feed..."}
         </div>
 
         {loading ? (

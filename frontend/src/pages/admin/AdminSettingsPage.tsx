@@ -15,6 +15,10 @@ export function AdminSettingsPage() {
     currency: "INR",
     taxRate: 0,
     maintenanceMode: false,
+    deliveryRatePerKm: 10,
+    deliveryRadiusKm: 15,
+    storeLatitude: 16.5186,
+    storeLongitude: 80.6200,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -160,6 +164,51 @@ export function AdminSettingsPage() {
               </div>
             </div>
 
+            {/* Delivery and Geolocation Configuration */}
+            <div className="mt-8 pt-8 border-t border-gray-100">
+              <h3 className="text-base font-black uppercase tracking-widest text-[#2d4a2d] mb-4">Delivery & Location Configuration</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <label className="space-y-2">
+                  <span className="text-xs font-black uppercase tracking-widest text-puja-text">Delivery Charge per KM (₹)</span>
+                  <input
+                    type="number"
+                    value={settings.deliveryRatePerKm}
+                    onChange={(e) => setSettings((prev) => ({ ...prev, deliveryRatePerKm: Number(e.target.value) }))}
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100 transition-all"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-xs font-black uppercase tracking-widest text-puja-text">Max Delivery Radius (KM)</span>
+                  <input
+                    type="number"
+                    value={settings.deliveryRadiusKm}
+                    onChange={(e) => setSettings((prev) => ({ ...prev, deliveryRadiusKm: Number(e.target.value) }))}
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100 transition-all"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-xs font-black uppercase tracking-widest text-puja-text">Store Center Latitude</span>
+                  <input
+                    type="number"
+                    step="any"
+                    value={settings.storeLatitude}
+                    onChange={(e) => setSettings((prev) => ({ ...prev, storeLatitude: Number(e.target.value) }))}
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100 transition-all"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-xs font-black uppercase tracking-widest text-[#2d4a2d]">Store Center Longitude</span>
+                  <input
+                    type="number"
+                    step="any"
+                    value={settings.storeLongitude}
+                    onChange={(e) => setSettings((prev) => ({ ...prev, storeLongitude: Number(e.target.value) }))}
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100 transition-all"
+                  />
+                </label>
+              </div>
+            </div>
+
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-8 border-t border-gray-100">
               <p className={`text-sm font-medium ${message.type === 'success' ? "text-green-600" : "text-red-600"}`}>
                 {message.text}
@@ -193,6 +242,11 @@ export function AdminSettingsPage() {
               <MapPin className="h-6 w-6 text-saffron-600" />
               <p className="mt-4 text-xs font-black uppercase tracking-widest text-gray-400">Location</p>
               <p className="mt-2 text-xs leading-relaxed text-puja-text font-medium">{settings.address || "No address configured"}</p>
+              {settings.storeLatitude && settings.storeLongitude && (
+                <p className="text-[10px] font-bold text-gray-500 mt-2 bg-gray-50 px-2 py-1 rounded-md w-fit border border-gray-100">
+                  📍 {settings.storeLatitude.toFixed(4)}, {settings.storeLongitude.toFixed(4)}
+                </p>
+              )}
             </div>
             <div className="rounded-[28px] border border-gray-100 bg-white p-6 shadow-sm">
               <div className="flex items-center gap-3">

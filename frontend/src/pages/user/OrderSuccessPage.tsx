@@ -21,17 +21,19 @@ export function OrderSuccessPage() {
         </p>
       )}
       <div className="flex flex-col sm:flex-row gap-4">
+        {orderId && (
+          <Link
+            to={`/order-tracking/${orderId}`}
+            className="bg-[#2d4a2d] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-2 hover:bg-black transition-all shadow-xl shadow-green-100"
+          >
+            <Package className="h-4 w-4" /> Track My Order
+          </Link>
+        )}
         <Link
           to="/account"
-          className="bg-[#2d4a2d] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-2"
+          className="bg-white border border-gray-200 text-puja-text px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-gray-50 transition-all"
         >
-          <Package className="h-4 w-4" /> View My Orders
-        </Link>
-        <Link
-          to="/collections"
-          className="bg-white border border-gray-200 text-puja-text px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs"
-        >
-          Continue Shopping
+          View My Orders
         </Link>
       </div>
     </div>

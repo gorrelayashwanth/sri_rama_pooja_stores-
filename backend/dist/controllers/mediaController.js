@@ -1,6 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.uploadImages = exports.uploadImage = void 0;
+const getFileUrl = (file) => {
+    if (!file.path)
+        return '';
+    const isUrl = file.path.startsWith('http://') || file.path.startsWith('https://');
+    return isUrl ? file.path : `/uploads/${file.filename}`;
+};
 const uploadImage = async (req, res, next) => {
     try {
         if (!req.file) {
@@ -11,7 +17,7 @@ const uploadImage = async (req, res, next) => {
             success: true,
             message: 'Image uploaded successfully',
             data: {
-                url: file.path,
+                url: getFileUrl(file),
                 publicId: file.filename
             }
         });
@@ -28,7 +34,7 @@ const uploadImages = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'No files uploaded' });
         }
         const images = files.map(file => ({
-            url: file.path,
+            url: getFileUrl(file),
             publicId: file.filename
         }));
         res.status(201).json({

@@ -20,6 +20,7 @@ export function ProductDetailPage() {
   const [reviewSuccess, setReviewSuccess] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [selectedTierIdx, setSelectedTierIdx] = useState(0);
   const addItem = useCartStore((state: any) => state.addItem);
   const { t } = useLanguage();
 
@@ -36,18 +37,27 @@ export function ProductDetailPage() {
 
   useEffect(() => {
     fetchProduct();
+    setSelectedTierIdx(0);
     window.scrollTo(0, 0);
   }, [slug]);
 
   const handleAddToCart = () => {
     if (!product) return;
+    const tiers = product.priceTiers 
+      ? (typeof product.priceTiers === 'string' ? JSON.parse(product.priceTiers) : product.priceTiers)
+      : [];
+    const hasTiers = Array.isArray(tiers) && tiers.length > 0;
+    const currentTier = hasTiers ? tiers[selectedTierIdx] : null;
+
     addItem({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      salePrice: product.salePrice,
+      id: currentTier ? `${product.id}-${currentTier.weight}` : product.id,
+      name: currentTier ? `${product.name} (${currentTier.weight})` : product.name,
+      price: currentTier ? currentTier.price : product.price,
+      salePrice: currentTier ? (currentTier.salePrice || undefined) : (product.salePrice || undefined),
       image: product.images?.[0]?.url || placeholderImage,
-      quantity: quantity
+      quantity: quantity,
+      productId: product.id,
+      selectedTier: currentTier ? currentTier.weight : undefined
     });
   };
 
@@ -91,6 +101,18 @@ export function ProductDetailPage() {
   const averageRating = product.reviews.length > 0 
     ? (product.reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / product.reviews.length).toFixed(1)
     : 0;
+
+  const tiers = product.priceTiers 
+    ? (typeof product.priceTiers === 'string' ? JSON.parse(product.priceTiers) : product.priceTiers)
+    : [];
+  const hasTiers = Array.isArray(tiers) && tiers.length > 0;
+  const currentTier = hasTiers ? tiers[selectedTierIdx] : null;
+
+  const displayPrice = currentTier ? currentTier.price : product.price;
+  const displaySalePrice = currentTier ? currentTier.salePrice : product.salePrice;
+  const displayDiscount = currentTier 
+    ? (currentTier.salePrice ? Math.round(((currentTier.price - currentTier.salePrice) / currentTier.price) * 100) : 0)
+    : product.discount;
 
   return (
     <div className="bg-white min-h-screen pb-20">
@@ -166,11 +188,11 @@ export function ProductDetailPage() {
             </h1>
 
             <div className="flex items-end gap-4 mb-8">
-              <span className="text-5xl font-black text-puja-text tracking-tighter">₹{product.salePrice || product.price}</span>
-              {product.salePrice && <span className="text-2xl text-puja-muted line-through mb-2 font-medium">₹{product.price}</span>}
-              {product.discount && (
+              <span className="text-5xl font-black text-puja-text tracking-tighter">₹{displaySalePrice || displayPrice}</span>
+              {displaySalePrice && <span className="text-2xl text-puja-muted line-through mb-2 font-medium">₹{displayPrice}</span>}
+              {displayDiscount > 0 && (
                 <div className="bg-saffron-500 text-white text-[10px] font-black px-4 py-2 rounded-full mb-2 uppercase tracking-widest animate-bounce">
-                  Sacred {product.discount}% OFF
+                  Sacred {displayDiscount}% OFF
                 </div>
               )}
             </div>
@@ -178,6 +200,33 @@ export function ProductDetailPage() {
             <p className="text-puja-muted leading-relaxed mb-10 text-lg italic border-l-4 border-saffron-100 pl-6 py-2">
               {t(product.description, product.translations, 'description')}
             </p>
+
+            {hasTiers && (
+              <div className="mb-8 p-6 rounded-2xl bg-gray-50 border border-gray-100">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#2d4a2d] block mb-3">Select Quantity / Size</span>
+                <div className="flex flex-wrap gap-3">
+                  {tiers.map((tier: any, idx: number) => {
+                    const isActive = selectedTierIdx === idx;
+                    const tierPrice = tier.salePrice || tier.price;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setSelectedTierIdx(idx)}
+                        className={`px-5 py-3 rounded-xl border-2 text-sm font-black transition-all uppercase tracking-wider flex flex-col items-center gap-1 min-w-[90px] ${
+                          isActive
+                            ? 'border-[#2d4a2d] bg-[#2d4a2d] text-white shadow-lg'
+                            : 'border-gray-200 hover:border-gray-300 bg-white text-[#2d4a2d]'
+                        }`}
+                      >
+                        <span className="font-bold">{tier.weight}</span>
+                        <span className={`text-xs ${isActive ? 'text-white/80' : 'text-gray-500'}`}>₹{tierPrice}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="space-y-8">

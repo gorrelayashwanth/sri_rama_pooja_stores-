@@ -8,6 +8,8 @@ interface CartItem {
   salePrice?: number;
   image: string;
   quantity: number;
+  productId?: string;
+  selectedTier?: string;
 }
 
 interface CartState {

@@ -6,4 +6,5 @@ const authMiddleware_1 = require("../middleware/authMiddleware");
 const router = (0, express_1.Router)();
 router.get('/', settingController_1.getSettings);
 router.patch('/', authMiddleware_1.authenticate, authMiddleware_1.authorizeAdmin, settingController_1.updateSettings);
+router.put('/', authMiddleware_1.authenticate, authMiddleware_1.authorizeAdmin, settingController_1.updateSettings);
 exports.default = router;
