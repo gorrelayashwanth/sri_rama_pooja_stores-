@@ -34,7 +34,7 @@ export function CartPage() {
           {/* Cart Items List */}
           <div className="lg:col-span-2 space-y-6">
             {items.map((item) => (
-              <div key={item.id} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex gap-6 items-center">
+              <div key={item.cartId} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex gap-6 items-center">
                 <div className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-50 shrink-0">
                   <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                 </div>
@@ -43,19 +43,24 @@ export function CartPage() {
                   <Link to={`/products/${item.id}`} className="hover:text-saffron-500 transition-colors">
                     <h3 className="font-bold text-puja-text text-lg line-clamp-1 mb-1">{item.name}</h3>
                   </Link>
+                  {item.selectedTier && (
+                    <span className="inline-block text-[10px] font-black uppercase tracking-wider bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md mb-1.5 mr-2">
+                      {item.selectedTier}
+                    </span>
+                  )}
                   <p className="text-saffron-600 font-bold">₹{item.salePrice || item.price}</p>
                 </div>
 
                 <div className="flex items-center border border-gray-100 rounded-xl bg-gray-50 p-1">
                   <button 
-                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                    onClick={() => updateQuantity(item.cartId, item.quantity - 1)}
                     className="p-2 hover:text-saffron-600 transition-colors"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
                   <span className="w-8 text-center font-bold text-sm">{item.quantity}</span>
                   <button 
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                    onClick={() => updateQuantity(item.cartId, item.quantity + 1)}
                     className="p-2 hover:text-saffron-600 transition-colors"
                   >
                     <Plus className="h-4 w-4" />
@@ -65,7 +70,7 @@ export function CartPage() {
                 <div className="text-right min-w-[100px]">
                   <p className="font-bold text-lg text-puja-text">₹{(item.salePrice || item.price) * item.quantity}</p>
                   <button 
-                    onClick={() => removeItem(item.id)}
+                    onClick={() => removeItem(item.cartId)}
                     className="text-red-500 hover:text-red-600 p-2 transition-colors mt-2"
                   >
                     <Trash2 className="h-5 w-5" />

@@ -116,7 +116,7 @@ const getProductBySlug = async (req, res, next) => {
 exports.getProductBySlug = getProductBySlug;
 const createProduct = async (req, res, next) => {
     try {
-        const { name, slug, description, price, salePrice, discount, sku, stock, categoryId, images, subcategory, unit, minOrderQty, material, weight, dimensions, tags, festival, deity, imagePrompt, isFeatured } = req.body;
+        const { name, slug, description, price, salePrice, discount, sku, stock, categoryId, images, subcategory, unit, minOrderQty, material, weight, dimensions, tags, festival, deity, imagePrompt, isFeatured, priceTiers } = req.body;
         const product = await prisma_1.default.product.create({
             data: {
                 name,
@@ -139,11 +139,12 @@ const createProduct = async (req, res, next) => {
                 deity: Array.isArray(deity) ? deity : [],
                 imagePrompt,
                 isFeatured: isFeatured === true || isFeatured === 'true',
+                priceTiers: priceTiers ? (typeof priceTiers === "string" ? JSON.parse(priceTiers) : priceTiers) : null,
                 images: {
-                    create: images.map((img) => ({
+                    create: images && Array.isArray(images) ? images.map((img) => ({
                         url: img.url,
                         publicId: img.publicId
-                    }))
+                    })) : []
                 }
             },
             include: {
@@ -163,7 +164,7 @@ const updateProduct = async (req, res, next) => {
         if (!id) {
             return res.status(400).json({ success: false, message: 'Product id is required' });
         }
-        const { name, slug, description, price, salePrice, discount, sku, stock, categoryId, images, subcategory, unit, minOrderQty, material, weight, dimensions, tags, festival, deity, imagePrompt, isFeatured, isAvailable } = req.body;
+        const { name, slug, description, price, salePrice, discount, sku, stock, categoryId, images, subcategory, unit, minOrderQty, material, weight, dimensions, tags, festival, deity, imagePrompt, isFeatured, isAvailable, priceTiers } = req.body;
         // Simple update - for images, we might want a separate logic
         const product = await prisma_1.default.product.update({
             where: { id },
@@ -188,7 +189,8 @@ const updateProduct = async (req, res, next) => {
                 tags: Array.isArray(tags) ? tags : undefined,
                 festival: Array.isArray(festival) ? festival : undefined,
                 deity: Array.isArray(deity) ? deity : undefined,
-                imagePrompt
+                imagePrompt,
+                priceTiers: priceTiers !== undefined ? (typeof priceTiers === "string" ? JSON.parse(priceTiers) : priceTiers) : undefined
             }
         });
         res.status(200).json({ success: true, message: 'Product updated successfully', data: product });

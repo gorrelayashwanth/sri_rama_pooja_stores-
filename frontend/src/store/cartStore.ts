@@ -1,20 +1,22 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface CartItem {
+export interface CartItem {
+  cartId: string;
   id: string;
   name: string;
   price: number;
   salePrice?: number;
   image: string;
   quantity: number;
+  selectedTier?: string;
 }
 
 interface CartState {
   items: CartItem[];
-  addItem: (item: CartItem) => void;
-  removeItem: (id: string) => void;
-  updateQuantity: (id: string, quantity: number) => void;
+  addItem: (item: Omit<CartItem, 'cartId'> & { cartId?: string }) => void;
+  removeItem: (cartId: string) => void;
+  updateQuantity: (cartId: string, quantity: number) => void;
   clearCart: () => void;
   totalItems: () => number;
   totalPrice: () => number;
@@ -25,25 +27,26 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       addItem: (item) => {
+        const cartId = item.cartId || (item.id + (item.selectedTier ? `-${item.selectedTier}` : ''));
         const items = get().items;
-        const existingItem = items.find((i) => i.id === item.id);
+        const existingItem = items.find((i) => i.cartId === cartId);
         if (existingItem) {
           set({
             items: items.map((i) =>
-              i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i
+              i.cartId === cartId ? { ...i, quantity: i.quantity + item.quantity } : i
             ),
           });
         } else {
-          set({ items: [...items, item] });
+          set({ items: [...items, { ...item, cartId }] });
         }
       },
-      removeItem: (id) => {
-        set({ items: get().items.filter((i) => i.id !== id) });
+      removeItem: (cartId) => {
+        set({ items: get().items.filter((i) => i.cartId !== cartId) });
       },
-      updateQuantity: (id, quantity) => {
+      updateQuantity: (cartId, quantity) => {
         set({
           items: get().items.map((i) =>
-            i.id === id ? { ...i, quantity: Math.max(1, quantity) } : i
+            i.cartId === cartId ? { ...i, quantity: Math.max(1, quantity) } : i
           ),
         });
       },

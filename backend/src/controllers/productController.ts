@@ -127,7 +127,7 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
   try {
     const { 
       name, slug, description, price, salePrice, discount, sku, stock, categoryId, images,
-      subcategory, unit, minOrderQty, material, weight, dimensions, tags, festival, deity, imagePrompt, isFeatured
+      subcategory, unit, minOrderQty, material, weight, dimensions, tags, festival, deity, imagePrompt, isFeatured, priceTiers
     } = req.body;
     
     const product = await prisma.product.create({
@@ -152,11 +152,12 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
         deity: Array.isArray(deity) ? deity : [],
         imagePrompt,
         isFeatured: isFeatured === true || isFeatured === 'true',
+        priceTiers: priceTiers ? (typeof priceTiers === "string" ? JSON.parse(priceTiers) : priceTiers) : null,
         images: {
-          create: images.map((img: any) => ({
+          create: images && Array.isArray(images) ? images.map((img: any) => ({
             url: img.url,
             publicId: img.publicId
-          }))
+          })) : []
         }
       },
       include: {
@@ -178,7 +179,7 @@ export const updateProduct = async (req: Request, res: Response, next: NextFunct
     }
     const { 
       name, slug, description, price, salePrice, discount, sku, stock, categoryId, images,
-      subcategory, unit, minOrderQty, material, weight, dimensions, tags, festival, deity, imagePrompt, isFeatured, isAvailable
+      subcategory, unit, minOrderQty, material, weight, dimensions, tags, festival, deity, imagePrompt, isFeatured, isAvailable, priceTiers
     } = req.body;
     
     // Simple update - for images, we might want a separate logic
@@ -205,7 +206,8 @@ export const updateProduct = async (req: Request, res: Response, next: NextFunct
         tags: Array.isArray(tags) ? tags : undefined,
         festival: Array.isArray(festival) ? festival : undefined,
         deity: Array.isArray(deity) ? deity : undefined,
-        imagePrompt
+        imagePrompt,
+        priceTiers: priceTiers !== undefined ? (typeof priceTiers === "string" ? JSON.parse(priceTiers) : priceTiers) : undefined
       }
     });
     

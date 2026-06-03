@@ -15,6 +15,10 @@ export function AdminSettingsPage() {
     currency: "INR",
     taxRate: 0,
     maintenanceMode: false,
+    deliveryRatePerKm: 10,
+    deliveryRadiusKm: 15,
+    storeLatitude: 16.5186,
+    storeLongitude: 80.6200,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -25,10 +29,27 @@ export function AdminSettingsPage() {
       const response = await api.get('/settings');
       if (response.data.data) {
         const fetchedSettings = response.data.data;
-        if (typeof fetchedSettings.workingHours === 'string') {
-          fetchedSettings.workingHours = fetchedSettings.workingHours.replace(/(^"|"$)/g, '');
+        let wh = fetchedSettings.workingHours || "";
+        if (typeof wh === 'string') {
+          wh = wh.replace(/(^"|"$)/g, '');
+        } else if (wh && typeof wh === 'object') {
+          wh = JSON.stringify(wh);
         }
-        setSettings(fetchedSettings);
+        setSettings({
+          storeName: fetchedSettings.storeName || "",
+          logo: fetchedSettings.logoUrl || "",
+          phone: fetchedSettings.phone || "",
+          email: fetchedSettings.email || "",
+          address: fetchedSettings.address || "",
+          workingHours: wh,
+          currency: fetchedSettings.currency || "INR",
+          taxRate: fetchedSettings.taxRate || 0,
+          maintenanceMode: fetchedSettings.isMaintenance || false,
+          deliveryRatePerKm: fetchedSettings.deliveryRatePerKm ?? 10,
+          deliveryRadiusKm: fetchedSettings.deliveryRadiusKm ?? 15,
+          storeLatitude: fetchedSettings.storeLatitude ?? 16.5186,
+          storeLongitude: fetchedSettings.storeLongitude ?? 80.6200,
+        });
       }
     } catch (error) {
       console.error("Failed to fetch settings", error);
@@ -45,7 +66,22 @@ export function AdminSettingsPage() {
     setSaving(true);
     setMessage({ type: "", text: "" });
     try {
-      await api.put('/settings', settings);
+      const payload = {
+        storeName: settings.storeName,
+        logoUrl: settings.logo,
+        phone: settings.phone,
+        email: settings.email,
+        address: settings.address,
+        workingHours: settings.workingHours,
+        currency: settings.currency,
+        taxRate: settings.taxRate,
+        isMaintenance: settings.maintenanceMode,
+        deliveryRatePerKm: Number(settings.deliveryRatePerKm),
+        deliveryRadiusKm: Number(settings.deliveryRadiusKm),
+        storeLatitude: Number(settings.storeLatitude),
+        storeLongitude: Number(settings.storeLongitude),
+      };
+      await api.patch('/settings', payload);
       setMessage({ type: "success", text: "Settings saved successfully!" });
       setTimeout(() => setMessage({ type: "", text: "" }), 3000);
     } catch (error) {
@@ -141,6 +177,51 @@ export function AdminSettingsPage() {
                 />
               </label>
 
+              {/* Delivery Settings Section */}
+              <div className="md:col-span-2 border-t border-gray-100 pt-6 mt-4">
+                <h3 className="text-base font-bold text-puja-text mb-4">Delivery & Hub Settings</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <label className="space-y-2">
+                    <span className="text-xs font-black uppercase tracking-widest text-puja-text">Delivery Rate Per Km (₹)</span>
+                    <input
+                      type="number"
+                      value={settings.deliveryRatePerKm}
+                      onChange={(e) => setSettings((prev) => ({ ...prev, deliveryRatePerKm: Number(e.target.value) }))}
+                      className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100 transition-all"
+                    />
+                  </label>
+                  <label className="space-y-2">
+                    <span className="text-xs font-black uppercase tracking-widest text-puja-text">Delivery Radius (Km)</span>
+                    <input
+                      type="number"
+                      value={settings.deliveryRadiusKm}
+                      onChange={(e) => setSettings((prev) => ({ ...prev, deliveryRadiusKm: Number(e.target.value) }))}
+                      className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100 transition-all"
+                    />
+                  </label>
+                  <label className="space-y-2">
+                    <span className="text-xs font-black uppercase tracking-widest text-puja-text">Store Latitude</span>
+                    <input
+                      type="number"
+                      step="any"
+                      value={settings.storeLatitude}
+                      onChange={(e) => setSettings((prev) => ({ ...prev, storeLatitude: Number(e.target.value) }))}
+                      className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100 transition-all"
+                    />
+                  </label>
+                  <label className="space-y-2">
+                    <span className="text-xs font-black uppercase tracking-widest text-puja-text">Store Longitude</span>
+                    <input
+                      type="number"
+                      step="any"
+                      value={settings.storeLongitude}
+                      onChange={(e) => setSettings((prev) => ({ ...prev, storeLongitude: Number(e.target.value) }))}
+                      className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100 transition-all"
+                    />
+                  </label>
+                </div>
+              </div>
+
               <div className="md:col-span-2 p-6 rounded-[24px] bg-red-50 border border-red-100 mt-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -151,6 +232,7 @@ export function AdminSettingsPage() {
                     </div>
                   </div>
                   <button 
+                    type="button"
                     onClick={() => setSettings({...settings, maintenanceMode: !settings.maintenanceMode})}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${settings.maintenanceMode ? 'bg-red-600' : 'bg-gray-200'}`}
                   >
