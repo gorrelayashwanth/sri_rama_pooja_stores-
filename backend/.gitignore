@@ -5,9 +5,3 @@ node_modules
 /generated/prisma
 
 generated-images/
-
-# SQLite database files
-*.db
-*.db-journal
-*.db-shm
-*.db-wal

@@ -92,11 +92,10 @@ model Product {
   weightGrams   Int?
   isPerishable  Boolean        @default(false)
   attributes    Json?
-  priceTiers    Json?
   dimensions    String?
-  tags          Json?
-  festival      Json?
-  deity         Json?
+  tags          String[]       @default([])
+  festival      String[]       @default([])
+  deity         String[]       @default([])
   imagePrompt   String?
   translations  Json?
   createdAt     DateTime       @default(now())
@@ -167,10 +166,6 @@ model Setting {
   instagramUrl  String?
   twitterUrl    String?
   workingHours  Json?
-  deliveryRatePerKm Float    @default(10)
-  deliveryRadiusKm  Float    @default(15)
-  storeLatitude     Float    @default(16.5186)
-  storeLongitude    Float    @default(80.6200)
   updatedAt     DateTime @updatedAt
 
   @@map("settings")
@@ -205,8 +200,6 @@ model Order {
   paymentMethod     PaymentMethod
   razorpayOrderId   String?       @unique
   razorpayPaymentId String?       @unique
-  latitude          Float?
-  longitude         Float?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   items             OrderItem[]
@@ -223,7 +216,6 @@ model OrderItem {
   quantity  Int
   price     Float
   total     Float
-  selectedTier String?
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product   Product @relation(fields: [productId], references: [id])
 

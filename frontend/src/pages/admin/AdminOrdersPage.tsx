@@ -4,24 +4,17 @@ import { AdminOrderCard } from "../../components/admin/AdminOrderCard";
 import { ShoppingBag, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import api from "../../api/axios";
-import { io } from "socket.io-client";
-
-const socketUrl = import.meta.env.VITE_API_URL
-  ? import.meta.env.VITE_API_URL.replace("/api/v1", "")
-  : import.meta.env.PROD
-  ? window.location.origin
-  : "http://localhost:5000";
 
 export function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
-  const [socketConnected, setSocketConnected] = useState(false);
   const statusFilter = "All Orders";
   const searchTerm = "";
 
-  const fetchOrders = async (showLoader = false) => {
-    if (showLoader) setLoading(true);
+  const [previousPlacedOrderIds, setPreviousPlacedOrderIds] = useState<Set<string>>(new Set());
+
+  const fetchOrders = async () => {
+    setLoading(true);
     try {
       const response = await api.get('/orders', {
         params: { 
@@ -29,54 +22,48 @@ export function AdminOrdersPage() {
           search: searchTerm
         }
       });
-      setOrders(response.data.data);
+      const fetchedOrders = response.data.data;
+      
+      // Check for new PLACED orders
+      const currentPlacedOrderIds = new Set<string>(
+        fetchedOrders.filter((o: any) => o.status === 'PLACED').map((o: any) => o.id)
+      );
+
+      // If we already had some placed orders loaded before (not first load), and we found new ones
+      if (previousPlacedOrderIds.size > 0) {
+        let hasNewOrder = false;
+        currentPlacedOrderIds.forEach(id => {
+          if (!previousPlacedOrderIds.has(id)) {
+            hasNewOrder = true;
+          }
+        });
+
+        if (hasNewOrder) {
+          // Play chime
+          const audio = new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=success-1-6297.mp3');
+          audio.play().catch(e => console.error("Audio play blocked by browser:", e));
+        }
+      }
+
+      setPreviousPlacedOrderIds(currentPlacedOrderIds);
+      setOrders(fetchedOrders);
     } catch (error) {
       console.error("Failed to fetch orders:", error);
     } finally {
-      if (showLoader) setLoading(false);
-      setIsFirstLoad(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOrders(isFirstLoad);
-  }, [statusFilter, searchTerm]);
-
-  useEffect(() => {
-    const socket = io(socketUrl, {
-      withCredentials: true
-    });
-
-    socket.on("connect", () => {
-      setSocketConnected(true);
-      socket.emit("join_admin");
-    });
-
-    socket.on("disconnect", () => {
-      setSocketConnected(false);
-    });
-
-    socket.on("new_order", (newOrder: any) => {
-      console.log("WebSocket: new order received", newOrder);
-      const audio = new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3?filename=success-1-6297.mp3');
-      audio.play().catch(e => console.error("Audio play blocked by browser:", e));
-
-      setOrders((prev) => {
-        if (prev.some(o => o.id === newOrder.id)) return prev;
-        return [newOrder, ...prev];
-      });
-    });
-
-    socket.on("order_status_updated", (data: { id: string; status: any }) => {
-      setOrders((prev) =>
-        prev.map(o => (o.id === data.id ? { ...o, status: data.status } : o))
-      );
-    });
+    fetchOrders();
+    const intervalId = window.setInterval(() => {
+      fetchOrders();
+    }, 10000); // Poll every 10s for hyper-local Quick Commerce
 
     return () => {
-      socket.disconnect();
+      window.clearInterval(intervalId);
     };
-  }, []);
+  }, [statusFilter, searchTerm]);
 
   return (
     <AdminLayout>
@@ -87,20 +74,12 @@ export function AdminOrdersPage() {
       
       <div className="p-8 flex-1 flex flex-col space-y-6">
         {/* Real-time Status Indicator */}
-        <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border w-fit ${
-          socketConnected 
-            ? 'text-green-600 bg-green-50 border-green-100' 
-            : 'text-amber-600 bg-amber-50 border-amber-100'
-        }`}>
+        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-green-600 bg-green-50 w-fit px-3 py-1 rounded-full border border-green-100">
           <span className="relative flex h-2 w-2">
-            {socketConnected && (
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            )}
-            <span className={`relative inline-flex rounded-full h-2 w-2 ${
-              socketConnected ? 'bg-green-500' : 'bg-amber-500'
-            }`}></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
           </span>
-          {socketConnected ? "Live Monitor Active" : "Reconnecting to Live Stream..."}
+          Live Monitoring Active
         </div>
 
         {loading ? (

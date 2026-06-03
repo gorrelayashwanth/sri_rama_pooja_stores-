@@ -20,18 +20,13 @@ export function ProductDetailPage() {
   const [reviewSuccess, setReviewSuccess] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const [activeImageIdx, setActiveImageIdx] = useState(0);
-  const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const addItem = useCartStore((state: any) => state.addItem);
   const { t } = useLanguage();
 
   const fetchProduct = async () => {
     try {
       const response = await api.get(`/products/${slug}`);
-      const prod = response.data.data;
-      setProduct(prod);
-      if (prod && prod.priceTiers && prod.priceTiers.length > 0) {
-        setSelectedTier(prod.priceTiers[0].name);
-      }
+      setProduct(response.data.data);
     } catch (error) {
       console.error("Failed to fetch product", error);
     } finally {
@@ -44,27 +39,15 @@ export function ProductDetailPage() {
     window.scrollTo(0, 0);
   }, [slug]);
 
-  let displayPrice = product?.price;
-  let displaySalePrice = product?.salePrice;
-
-  if (selectedTier && product?.priceTiers) {
-    const activeTier = product.priceTiers.find((t: any) => t.name === selectedTier);
-    if (activeTier) {
-      displayPrice = activeTier.price;
-      displaySalePrice = activeTier.salePrice;
-    }
-  }
-
   const handleAddToCart = () => {
     if (!product) return;
     addItem({
       id: product.id,
       name: product.name,
-      price: displayPrice,
-      salePrice: displaySalePrice || undefined,
+      price: product.price,
+      salePrice: product.salePrice,
       image: product.images?.[0]?.url || placeholderImage,
-      quantity: quantity,
-      selectedTier: selectedTier || undefined
+      quantity: quantity
     });
   };
 
@@ -183,40 +166,18 @@ export function ProductDetailPage() {
             </h1>
 
             <div className="flex items-end gap-4 mb-8">
-              <span className="text-5xl font-black text-puja-text tracking-tighter">₹{displaySalePrice || displayPrice}</span>
-              {displaySalePrice && <span className="text-2xl text-puja-muted line-through mb-2 font-medium">₹{displayPrice}</span>}
-              {product.discount && !selectedTier && (
+              <span className="text-5xl font-black text-puja-text tracking-tighter">₹{product.salePrice || product.price}</span>
+              {product.salePrice && <span className="text-2xl text-puja-muted line-through mb-2 font-medium">₹{product.price}</span>}
+              {product.discount && (
                 <div className="bg-saffron-500 text-white text-[10px] font-black px-4 py-2 rounded-full mb-2 uppercase tracking-widest animate-bounce">
                   Sacred {product.discount}% OFF
                 </div>
               )}
             </div>
 
-            <p className="text-puja-muted leading-relaxed mb-8 text-lg italic border-l-4 border-saffron-100 pl-6 py-2">
+            <p className="text-puja-muted leading-relaxed mb-10 text-lg italic border-l-4 border-saffron-100 pl-6 py-2">
               {t(product.description, product.translations, 'description')}
             </p>
-
-            {/* Quantity/Weight Tiers selector */}
-            {product.priceTiers && product.priceTiers.length > 0 && (
-              <div className="mb-8">
-                <span className="text-xs font-black uppercase tracking-widest text-puja-muted block mb-3">Select Net Quantity / Tier</span>
-                <div className="flex flex-wrap gap-3">
-                  {product.priceTiers.map((tier: any) => (
-                    <button
-                      key={tier.name}
-                      onClick={() => setSelectedTier(tier.name)}
-                      className={`px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider border-2 transition-all active:scale-95 ${
-                        selectedTier === tier.name
-                          ? 'border-[#2d4a2d] bg-[#2d4a2d]/5 text-[#2d4a2d]'
-                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                      }`}
-                    >
-                      {tier.name} (₹{tier.salePrice || tier.price})
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Actions */}
             <div className="space-y-8">

@@ -50,7 +50,6 @@ const createInitialFormData = () => ({
   deity: "",
   imagePrompt: "",
   isFeatured: false,
-  priceTiers: [] as { name: string; price: number; salePrice?: number }[],
 });
 
 const slugify = (value: string) =>
@@ -88,35 +87,6 @@ export function AdminProductsPage() {
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
   const [formData, setFormData] = useState(createInitialFormData());
-  const [selectedProductDetails, setSelectedProductDetails] = useState<Product | null>(null);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const data = new FormData();
-    data.append("image", file);
-    setIsSubmitting(true);
-    setSubmitError("");
-    try {
-      const response = await api.post("/media/upload", data, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      if (response.data.success) {
-        setFormData((prev) => ({
-          ...prev,
-          imageUrl: response.data.data.url,
-        }));
-        setSubmitSuccess("Image uploaded successfully!");
-        setTimeout(() => setSubmitSuccess(""), 3000);
-      }
-    } catch (error) {
-      setSubmitError(getErrorMessage(error, "Failed to upload image."));
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const fetchProducts = async (page = 1) => {
     setLoading(true);
@@ -217,7 +187,6 @@ export function AdminProductsPage() {
       deity: (product.deity || []).join(", "),
       imagePrompt: product.imagePrompt || "",
       isFeatured: Boolean(product.isFeatured),
-      priceTiers: (product as any).priceTiers || [],
     });
     setIsAddOpen(true);
     setSubmitSuccess("");
@@ -237,7 +206,6 @@ export function AdminProductsPage() {
     images: formData.imageUrl
       ? [{ url: formData.imageUrl, publicId: `manual-${formData.slug}` }]
       : [],
-    priceTiers: formData.priceTiers,
   });
 
   const handleCreateProduct = async () => {
@@ -420,8 +388,7 @@ export function AdminProductsPage() {
 
         {/* Table Container */}
         <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
-          {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto">
+          <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-gray-50/50 border-b border-gray-50">
@@ -453,11 +420,7 @@ export function AdminProductsPage() {
                   </tr>
                 ) : (
                   products.map((product) => (
-                    <tr 
-                      key={product.id} 
-                      onClick={() => setSelectedProductDetails(product)}
-                      className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
-                    >
+                    <tr key={product.id} className="hover:bg-gray-50/50 transition-colors group">
                       <td className="px-8 py-4">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
@@ -495,10 +458,7 @@ export function AdminProductsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleAvailability(product.id);
-                          }}
+                          onClick={() => toggleAvailability(product.id)}
                           className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter border transition-all ${
                             product.isAvailable 
                               ? 'bg-green-50 text-green-600 border-green-100 hover:bg-green-100' 
@@ -513,11 +473,11 @@ export function AdminProductsPage() {
                         </button>
                       </td>
                       <td className="px-8 py-4 text-right">
-                        <div onClick={(e) => e.stopPropagation()} className="flex items-center justify-end gap-1 md:gap-2">
+                        <div className="flex items-center justify-end gap-1 md:gap-2">
                           <button 
                             type="button"
                             onClick={() => handleGenerateImage(product.id)}
-                            className="p-2.5 text-gray-400 hover:text-saffron-500 hover:bg-saffron-50 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                            className="p-2.5 text-gray-400 hover:text-saffron-500 hover:bg-saffron-50 rounded-xl transition-colors"
                             title="Generate Image"
                           >
                             <Sparkles className="h-4 w-4" />
@@ -525,7 +485,7 @@ export function AdminProductsPage() {
                           <button
                             type="button"
                             onClick={() => window.open(`/products/${product.slug}`, "_blank")}
-                            className="p-2.5 text-gray-400 hover:text-puja-text hover:bg-gray-50 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                            className="p-2.5 text-gray-400 hover:text-puja-text hover:bg-gray-50 rounded-xl transition-colors"
                             title="View on store"
                           >
                             <Eye className="h-4 w-4" />
@@ -533,7 +493,7 @@ export function AdminProductsPage() {
                           <button
                             type="button"
                             onClick={() => openEditModal(product)}
-                            className="p-2.5 text-gray-400 hover:text-saffron-600 hover:bg-saffron-50 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                            className="p-2.5 text-gray-400 hover:text-saffron-600 hover:bg-saffron-50 rounded-xl transition-colors"
                             title="Edit product"
                           >
                             <Edit3 className="h-4 w-4" />
@@ -541,7 +501,7 @@ export function AdminProductsPage() {
                           <button 
                             type="button"
                             onClick={() => deleteProduct(product.id)}
-                            className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                            className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
                             title="Delete product"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -553,71 +513,6 @@ export function AdminProductsPage() {
                 ))}
               </tbody>
             </table>
-          </div>
-
-          {/* Mobile Card List View */}
-          <div className="block md:hidden divide-y divide-gray-100">
-            {loading ? (
-              <div className="px-6 py-16 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-saffron-500 mx-auto mb-4"></div>
-                <p className="text-sm text-puja-muted font-medium">Loading products...</p>
-              </div>
-            ) : products.length === 0 ? (
-              <div className="px-6 py-16 text-center">
-                <p className="text-gray-400 italic">No products found.</p>
-              </div>
-            ) : (
-              products.map((product) => (
-                <div 
-                  key={product.id} 
-                  onClick={() => setSelectedProductDetails(product)}
-                  className="p-5 flex gap-4 active:bg-gray-50 cursor-pointer transition-colors relative"
-                >
-                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
-                    <img 
-                      src={product.images?.[0]?.url || placeholderImage} 
-                      alt={product.name} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1 space-y-1 pr-20">
-                    <p className="font-bold text-puja-text text-sm truncate">{product.name}</p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">SKU: {product.sku}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs font-black text-puja-text">
-                        ₹{(product.salePrice && product.salePrice > 0 ? product.salePrice : product.price).toLocaleString("en-IN")}
-                      </span>
-                      <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full border ${
-                        product.isAvailable ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'
-                      }`}>
-                        {product.isAvailable ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Actions Overlay */}
-                  <div 
-                    onClick={(e) => e.stopPropagation()} 
-                    className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-1"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => openEditModal(product)}
-                      className="p-2 text-gray-400 hover:text-saffron-600 min-h-[44px] min-w-[44px] flex items-center justify-center bg-gray-50 border border-gray-100 rounded-xl"
-                    >
-                      <Edit3 className="h-4.5 w-4.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => deleteProduct(product.id)}
-                      className="p-2 text-gray-400 hover:text-red-500 min-h-[44px] min-w-[44px] flex items-center justify-center bg-gray-50 border border-gray-100 rounded-xl"
-                    >
-                      <Trash2 className="h-4.5 w-4.5" />
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
           </div>
 
           {/* Pagination */}
@@ -864,39 +759,8 @@ export function AdminProductsPage() {
                     className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100"
                   />
                 </label>
-                <div className="space-y-2 md:col-span-2">
-                  <span className="text-sm font-bold text-puja-text">Product Images</span>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      id="image-upload-input"
-                    />
-                    <label
-                      htmlFor="image-upload-input"
-                      className="bg-gray-100 border border-gray-300 text-puja-text px-4 py-3 rounded-2xl text-xs font-bold hover:bg-gray-200 cursor-pointer active:scale-95 transition-all"
-                    >
-                      Upload Photo
-                    </label>
-                    {formData.imageUrl && (
-                      <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-200">
-                        <img src={formData.imageUrl} alt="Uploaded" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => setFormData({ ...formData, imageUrl: "" })}
-                          className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
                 <label className="space-y-2 md:col-span-2">
-                  <span className="text-sm font-bold text-puja-text">Image URL (Optional Override)</span>
+                  <span className="text-sm font-bold text-puja-text">Image URL</span>
                   <input
                     value={formData.imageUrl}
                     onChange={(e) => handleFieldChange("imageUrl", e.target.value)}
@@ -904,99 +768,6 @@ export function AdminProductsPage() {
                     className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-saffron-100"
                   />
                 </label>
-
-                {/* Price Tiers Section */}
-                <div className="space-y-4 md:col-span-2 border-t border-gray-100 pt-6">
-                  <div>
-                    <h4 className="text-sm font-bold text-puja-text">Net Quantity / Price Tiers</h4>
-                    <p className="text-xs text-puja-muted">Configure weight-based tiers (e.g. 250g, 500g, 1kg) with specific pricing. If left empty, base price is used.</p>
-                  </div>
-
-                  <div className="space-y-3 bg-gray-50/50 p-5 rounded-2xl border border-gray-100">
-                    {/* List of existing tiers */}
-                    {formData.priceTiers && formData.priceTiers.length > 0 && (
-                      <div className="space-y-2">
-                        {formData.priceTiers.map((tier, idx) => (
-                          <div key={idx} className="flex justify-between items-center bg-white px-4 py-2.5 rounded-xl border border-gray-100 text-xs font-bold text-puja-text">
-                            <span>{tier.name} — Price: ₹{tier.price} {tier.salePrice ? `(Sale: ₹${tier.salePrice})` : ""}</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  priceTiers: prev.priceTiers.filter((_, i) => i !== idx)
-                                }));
-                              }}
-                              className="text-red-500 hover:text-red-700 text-[10px] uppercase tracking-wider"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Inputs to add a tier */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
-                      <label className="space-y-1">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-puja-muted">Tier Name (e.g. 500g)</span>
-                        <input
-                          id="new-tier-name"
-                          placeholder="500g"
-                          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-saffron-100"
-                        />
-                      </label>
-                      <label className="space-y-1">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-puja-muted">Price (₹)</span>
-                        <input
-                          id="new-tier-price"
-                          type="number"
-                          placeholder="150"
-                          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-saffron-100"
-                        />
-                      </label>
-                      <div className="flex gap-2">
-                        <label className="space-y-1 flex-1">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-puja-muted">Sale Price (₹)</span>
-                          <input
-                            id="new-tier-saleprice"
-                            type="number"
-                            placeholder="120"
-                            className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-saffron-100"
-                          />
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const nameEl = document.getElementById("new-tier-name") as HTMLInputElement;
-                            const priceEl = document.getElementById("new-tier-price") as HTMLInputElement;
-                            const salePriceEl = document.getElementById("new-tier-saleprice") as HTMLInputElement;
-
-                            if (nameEl && priceEl && nameEl.value && priceEl.value) {
-                              const newTier = {
-                                name: nameEl.value.trim(),
-                                price: Number(priceEl.value),
-                                salePrice: salePriceEl.value ? Number(salePriceEl.value) : undefined
-                              };
-                              setFormData(prev => ({
-                                ...prev,
-                                priceTiers: [...(prev.priceTiers || []), newTier]
-                              }));
-                              nameEl.value = "";
-                              priceEl.value = "";
-                              salePriceEl.value = "";
-                            } else {
-                              alert("Please fill in Tier Name and Price.");
-                            }
-                          }}
-                          className="bg-[#2d4a2d] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-black transition-all h-9 self-end"
-                        >
-                          Add
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
               </div>
 
@@ -1075,178 +846,6 @@ export function AdminProductsPage() {
                   className="rounded-2xl bg-[#2d4a2d] px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-[#1a2b1a] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSubmitting ? "Importing..." : "Import Products"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {selectedProductDetails && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">
-            <div className="w-full sm:max-w-2xl max-h-[100dvh] sm:max-h-[90vh] flex flex-col rounded-t-[28px] sm:rounded-[32px] border border-gray-100 bg-white shadow-2xl overflow-hidden">
-              <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4 md:px-8 md:py-5">
-                <div>
-                  <h2 className="text-xl md:text-2xl font-playfair font-bold text-puja-text">Product Details</h2>
-                  <p className="text-sm text-puja-muted">Detailed view of the catalog record.</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedProductDetails(null)}
-                  className="rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-puja-text"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto overscroll-contain p-6 md:p-8 space-y-6">
-                <div className="flex flex-col sm:flex-row gap-6">
-                  <div className="w-full sm:w-48 h-48 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
-                    <img
-                      src={selectedProductDetails.images?.[0]?.url || placeholderImage}
-                      alt={selectedProductDetails.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="space-y-3 min-w-0 flex-1">
-                    <span className="text-xs font-bold text-saffron-600 bg-saffron-50 px-2.5 py-1 rounded-lg">
-                      {selectedProductDetails.category?.name || "General"}
-                    </span>
-                    <h3 className="text-xl font-bold text-puja-text">{selectedProductDetails.name}</h3>
-                    <p className="text-xs text-gray-400 font-bold uppercase tracking-tight">SKU: {selectedProductDetails.sku}</p>
-                    
-                    <div className="flex items-center gap-4">
-                      <div>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase">Price</p>
-                        <p className="text-lg font-black text-puja-text">
-                          ₹{(selectedProductDetails.salePrice && selectedProductDetails.salePrice > 0 ? selectedProductDetails.salePrice : selectedProductDetails.price).toLocaleString("en-IN")}
-                        </p>
-                        {selectedProductDetails.salePrice != null && selectedProductDetails.salePrice > 0 && selectedProductDetails.salePrice < selectedProductDetails.price && (
-                          <p className="text-xs text-gray-400 line-through">₹{selectedProductDetails.price}</p>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase">Stock</p>
-                        <p className="text-base font-bold text-puja-text">{selectedProductDetails.stock} units</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase">Status</p>
-                        <span className={`inline-block text-xs font-bold px-2 py-0.5 rounded-full border ${
-                          selectedProductDetails.isAvailable ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'
-                        }`}>
-                          {selectedProductDetails.isAvailable ? 'Active' : 'Inactive'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-100 pt-6 space-y-4">
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Description</h4>
-                    <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{selectedProductDetails.description || "No description provided."}</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <span className="text-[10px] text-gray-400 font-bold uppercase block">Subcategory</span>
-                      <span className="font-bold text-puja-text">{selectedProductDetails.subcategory || "—"}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-gray-400 font-bold uppercase block">Unit</span>
-                      <span className="font-bold text-puja-text">{selectedProductDetails.unit || "—"}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-gray-400 font-bold uppercase block">Min Qty</span>
-                      <span className="font-bold text-puja-text">{selectedProductDetails.minOrderQty ?? 1}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-gray-400 font-bold uppercase block">Material</span>
-                      <span className="font-bold text-puja-text">{selectedProductDetails.material || "—"}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-gray-400 font-bold uppercase block">Weight</span>
-                      <span className="font-bold text-puja-text">{selectedProductDetails.weight || "—"}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-gray-400 font-bold uppercase block">Dimensions</span>
-                      <span className="font-bold text-puja-text">{selectedProductDetails.dimensions || "—"}</span>
-                    </div>
-                  </div>
-
-                  {(selectedProductDetails as any).priceTiers && (selectedProductDetails as any).priceTiers.length > 0 && (
-                    <div>
-                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Quantity / Price Tiers</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {(selectedProductDetails as any).priceTiers.map((tier: any, idx: number) => (
-                          <div key={idx} className="bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-100 flex justify-between items-center text-xs font-bold text-puja-text">
-                            <span>{tier.name}</span>
-                            <span>₹{tier.salePrice && tier.salePrice > 0 ? tier.salePrice : tier.price}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    {selectedProductDetails.tags && (selectedProductDetails.tags as string[]).length > 0 && (
-                      <div>
-                        <span className="text-[10px] text-gray-400 font-bold uppercase block mb-1">Tags</span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {(selectedProductDetails.tags as string[]).map((t, i) => (
-                            <span key={i} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md font-medium">{t}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {selectedProductDetails.festival && (selectedProductDetails.festival as string[]).length > 0 && (
-                      <div>
-                        <span className="text-[10px] text-gray-400 font-bold uppercase block mb-1">Festivals</span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {(selectedProductDetails.festival as string[]).map((f, i) => (
-                            <span key={i} className="text-xs bg-saffron-50 text-saffron-700 px-2 py-0.5 rounded-md font-medium">{f}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {selectedProductDetails.deity && (selectedProductDetails.deity as string[]).length > 0 && (
-                      <div>
-                        <span className="text-[10px] text-gray-400 font-bold uppercase block mb-1">Deities</span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {(selectedProductDetails.deity as string[]).map((d, i) => (
-                            <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md font-medium">{d}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {selectedProductDetails.imagePrompt && (
-                    <div>
-                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">AI Image Prompt</h4>
-                      <p className="text-xs text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100 font-medium italic">{selectedProductDetails.imagePrompt}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex shrink-0 flex-col gap-3 border-t border-gray-100 px-5 py-4 md:flex-row md:items-center md:justify-end md:px-8 safe-area-pb bg-gray-50/50">
-                <button
-                  type="button"
-                  onClick={() => setSelectedProductDetails(null)}
-                  className="rounded-2xl border border-gray-200 bg-white px-5 py-3 text-sm font-bold text-puja-text transition-colors hover:bg-gray-50"
-                >
-                  Close
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const prod = selectedProductDetails;
-                    setSelectedProductDetails(null);
-                    openEditModal(prod);
-                  }}
-                  className="rounded-2xl bg-[#2d4a2d] px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-[#1a2b1a]"
-                >
-                  Edit Product
                 </button>
               </div>
             </div>

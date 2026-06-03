@@ -26,7 +26,6 @@ import { AccountPage } from "./pages/user/AccountPage";
 import { AboutPage } from "./pages/user/AboutPage";
 import { ContactPage } from "./pages/user/ContactPage";
 import { WishlistPage } from "./pages/user/WishlistPage";
-import { OrderTrackingPage } from "./pages/user/OrderTrackingPage";
 import { AdminOrdersPage } from "./pages/admin/AdminOrdersPage";
 import { AdminCombosPage } from "./pages/admin/AdminCombosPage";
 import { AdminProductsPage } from "./pages/admin/AdminProductsPage";
@@ -78,7 +77,6 @@ function AppShell() {
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
             <Route path="/order-success/:orderId" element={<ProtectedRoute><OrderSuccessPage /></ProtectedRoute>} />
-            <Route path="/orders/:orderId/track" element={<ProtectedRoute><OrderTrackingPage /></ProtectedRoute>} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/account/*" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
