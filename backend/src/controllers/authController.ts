@@ -7,9 +7,16 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
   try {
     const { name, email, password, phone } = req.body;
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({ success: false, message: 'User already exists' });
+    const existingUserByEmail = await prisma.user.findUnique({ where: { email } });
+    if (existingUserByEmail) {
+      return res.status(400).json({ success: false, message: 'An account with this email address already exists. Please log in or use a different email.' });
+    }
+
+    if (phone) {
+      const existingUserByPhone = await prisma.user.findUnique({ where: { phone } });
+      if (existingUserByPhone) {
+        return res.status(400).json({ success: false, message: 'An account with this phone number already exists. Please log in or use a different phone number.' });
+      }
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
